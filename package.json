@@ -1,0 +1,11 @@
+{
+  "name": "ai-ticket-system",
+  "private": true,
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "dev:backend": "bun run --cwd backend dev",
+    "dev:frontend": "bun run --cwd frontend dev",
+    "db:migrate": "bun run --cwd backend db:migrate",
+    "db:seed": "bun run --cwd backend db:seed"
+  }
+}
