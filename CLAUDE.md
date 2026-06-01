@@ -12,7 +12,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **Backend:** Express + TypeScript + Bun (port 3001)
 - **Database:** PostgreSQL 16 + pgvector (Docker)
 - **ORM:** Prisma 7
-- **Auth:** express-session + connect-pg-simple + bcrypt
+- **Auth:** Better Auth (email/password, database sessions)
 - **AI:** Anthropic Claude API (Haiku for classification/summaries, Sonnet for drafting/polish)
 - **Embeddings:** @xenova/transformers — local, no API key required
 - **Email:** Postmark (inbound webhook + outbound)
@@ -84,7 +84,8 @@ Copy `backend/.env.example` (or root `.env.example`) to `backend/.env` and fill 
 
 ```
 DATABASE_URL="postgresql://helpdesk:helpdesk@localhost:5433/tickets"
-SESSION_SECRET="..."
+BETTER_AUTH_SECRET="..."
+BETTER_AUTH_URL="http://localhost:3001"
 POSTMARK_TOKEN="..."
 ANTHROPIC_API_KEY="..."
 ADMIN_EMAIL="..."
