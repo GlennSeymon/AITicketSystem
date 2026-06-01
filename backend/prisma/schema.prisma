@@ -7,6 +7,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  AGENT
+}
+
 enum TicketStatus {
   OPEN
   RESOLVED
@@ -33,7 +38,7 @@ model user {
   image         String?
   createdAt     DateTime
   updatedAt     DateTime
-  role          String    @default("AGENT")
+  role          Role      @default(AGENT)
   isActive      Boolean   @default(true)
   sessions      session[]
   accounts      account[]
