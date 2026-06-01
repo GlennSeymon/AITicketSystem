@@ -53,7 +53,7 @@ cp backend/.env.example backend/.env
 Edit `backend/.env` and fill in your credentials:
 
 ```
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tickets"
+DATABASE_URL="postgresql://helpdesk:helpdesk@localhost:5433/tickets"
 SESSION_SECRET="your-secret-here"
 POSTMARK_TOKEN="your-postmark-token"
 ANTHROPIC_API_KEY="your-anthropic-key"

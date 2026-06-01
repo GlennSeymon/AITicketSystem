@@ -51,7 +51,7 @@ bun run db:migrate        # prisma migrate dev
 bun run db:seed           # bun src/seed.ts
 
 # Docker
-docker compose up -d      # Start PostgreSQL
+docker compose up -d      # Start PostgreSQL on port 5433
 ```
 
 ## Key Conventions
@@ -83,7 +83,7 @@ Key library IDs for this project:
 Copy `backend/.env.example` (or root `.env.example`) to `backend/.env` and fill in:
 
 ```
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/tickets"
+DATABASE_URL="postgresql://helpdesk:helpdesk@localhost:5433/tickets"
 SESSION_SECRET="..."
 POSTMARK_TOKEN="..."
 ANTHROPIC_API_KEY="..."

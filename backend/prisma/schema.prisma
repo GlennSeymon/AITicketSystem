@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,70 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum TicketStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  GENERAL
+  TECHNICAL
+  REFUND
+  UNCATEGORISED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(AGENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model Ticket {
+  id              String         @id @default(cuid())
+  subject         String
+  body            String
+  fromEmail       String
+  fromName        String?
+  postmarkMessageId String?      @unique
+  status          TicketStatus   @default(OPEN)
+  category        TicketCategory @default(UNCATEGORISED)
+  aiDraft         String?
+  aiSummary       String?
+  messages        Message[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Message {
+  id        String           @id @default(cuid())
+  ticketId  String
+  ticket    Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  body      String
+  direction MessageDirection
+  createdAt DateTime         @default(now())
+}
+
+model KBArticle {
+  id        String                 @id @default(cuid())
+  title     String
+  content   String
+  embedding Unsupported("vector(384)")?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
 }
