@@ -54,6 +54,27 @@ bun run db:seed           # bun src/seed.ts
 docker compose up -d      # Start PostgreSQL on port 5433
 ```
 
+## Authentication
+
+Better Auth handles all auth. Key files:
+
+- `backend/src/auth.ts` — Better Auth instance (Prisma adapter, email/password only, **sign-up disabled**)
+- `backend/src/require-auth.ts` — `requireAuth` Express middleware; attaches `req.user` and `req.session`
+- `frontend/src/lib/authClient.ts` — `authClient` (Better Auth React client)
+
+**Backend wiring:**
+- All Better Auth endpoints are mounted at `app.all('/api/auth/*', toNodeHandler(auth))`
+- Protect routes with the `requireAuth` middleware: `router.get('/example', requireAuth, handler)`
+- Access the session user via `req.user` (typed as Better Auth's user with `role` and `isActive` fields)
+
+**Frontend wiring:**
+- Session state: `const { data, isPending } = authClient.useSession()`
+- Sign in: `authClient.signIn.email({ email, password })`
+- Sign out: `authClient.signOut()`
+- `ProtectedRoute` component redirects unauthenticated users to `/login`
+
+**No custom auth endpoints** — do not add `/api/auth/login` or `/api/auth/me` routes; Better Auth provides these automatically under `/api/auth/*`.
+
 ## Key Conventions
 
 - All API routes are prefixed `/api/`
