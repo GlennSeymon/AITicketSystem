@@ -1,5 +1,5 @@
 import { AppBar, Button, Toolbar, Typography, styled } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authClient } from '../lib/authClient';
 
 const StyledAppBar = styled(AppBar)({
@@ -13,6 +13,10 @@ const GrowBox = styled('div')({
 const UserName = styled(Typography)({
 	marginRight: 16,
 });
+
+const NavLink = styled(Button)({
+	color: 'inherit',
+}) as typeof Button;
 
 const SignOutButton = styled(Button)({
 	color: 'inherit',
@@ -32,6 +36,11 @@ export default function NavBar() {
 			<Toolbar>
 				<Typography variant='h6'>AI Ticket System</Typography>
 				<GrowBox />
+				{data?.user.role === 'ADMIN' && (
+					<NavLink component={Link} to='/users'>
+						Users
+					</NavLink>
+				)}
 				<UserName variant='body1'>{data?.user.name}</UserName>
 				<SignOutButton onClick={handleSignOut}>Sign Out</SignOutButton>
 			</Toolbar>

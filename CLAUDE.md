@@ -72,6 +72,12 @@ Better Auth handles all auth. Key files:
 - Sign in: `authClient.signIn.email({ email, password })`
 - Sign out: `authClient.signOut()`
 - `ProtectedRoute` component redirects unauthenticated users to `/login`
+- `AdminRoute` component redirects non-admins to `/` — nest inside `ProtectedRoute`
+- `authClient` uses `inferAdditionalFields` plugin so `data.user.role` and `data.user.isActive` are typed
+
+**Role values** match the Prisma enum and are always uppercase: `'ADMIN'` and `'AGENT'`.
+
+**Creating users programmatically** — Better Auth uses scrypt (`salt:hash` hex format), not bcrypt. Use `(await auth.$context).password.hash(pw)` to generate a compatible hash. Never use `Bun.password.hash` or bcrypt directly.
 
 **No custom auth endpoints** — do not add `/api/auth/login` or `/api/auth/me` routes; Better Auth provides these automatically under `/api/auth/*`.
 
@@ -111,5 +117,7 @@ POSTMARK_TOKEN="..."
 ANTHROPIC_API_KEY="..."
 ADMIN_EMAIL="..."
 ADMIN_PASSWORD="..."
+AGENT_EMAIL="..."
+AGENT_PASSWORD="..."
 PORT=3001
 ```
