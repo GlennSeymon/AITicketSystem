@@ -2,6 +2,8 @@
 
 An AI-powered support ticket system for an online programming course business. It replaces a manual Freshdesk workflow by automatically classifying incoming emails, drafting personalised responses using a knowledge base, and providing a human agent dashboard for review and approval.
 
+> This project was built using [Claude Code](https://claude.ai/code) as part of the [Code with Mosh — Claude Code for Professional Developers](https://codewithmosh.com/p/claude-code) course.
+
 ## Features
 
 - **Email ingestion** — Receives support emails via Postmark webhooks and creates tickets
