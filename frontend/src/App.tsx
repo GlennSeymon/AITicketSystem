@@ -1,46 +1,36 @@
-import {
-	CssBaseline,
-	Typography,
-	Container,
-	Alert,
-	CircularProgress,
-	styled,
-} from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import { CssBaseline } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import NavBar from './components/NavBar';
+import ProtectedRoute from './components/ProtectedRoute';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import theme from './theme';
 
-const StyledHeading = styled(Typography)(({ theme }) => ({
-	marginTop: theme.spacing(4),
-}));
-
-async function fetchHealth(): Promise<{ status: string }> {
-	const res = await fetch('/api/health');
-	if (!res.ok) throw new Error('Health check failed');
-	return res.json();
+function AuthLayout() {
+	return (
+		<>
+			<NavBar />
+			<Outlet />
+		</>
+	);
 }
 
 export default function App() {
-	const { data, isLoading, isError } = useQuery({
-		queryKey: ['health'],
-		queryFn: fetchHealth,
-	});
-
 	return (
-		<>
-			<CssBaseline />
-			<Container>
-				<StyledHeading variant='h4'>AI Ticket System</StyledHeading>
-				{isLoading && <CircularProgress sx={{ mt: 2 }} />}
-				{isError && (
-					<Alert severity='error' sx={{ mt: 2 }}>
-						Could not reach the backend.
-					</Alert>
-				)}
-				{data && (
-					<Alert severity='success' sx={{ mt: 2 }}>
-						Backend status: {data.status}
-					</Alert>
-				)}
-			</Container>
-		</>
+		<ThemeProvider theme={theme}>
+			<BrowserRouter>
+				<CssBaseline />
+				<Routes>
+					<Route path='/login' element={<LoginPage />} />
+					<Route element={<ProtectedRoute />}>
+						<Route element={<AuthLayout />}>
+							<Route index element={<HomePage />} />
+						</Route>
+					</Route>
+					<Route path='*' element={<Navigate to='/' replace />} />
+				</Routes>
+			</BrowserRouter>
+		</ThemeProvider>
 	);
 }
