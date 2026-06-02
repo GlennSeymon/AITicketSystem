@@ -2,9 +2,14 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from './prisma';
 
+const trustedOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',');
+if (!trustedOrigins?.length && process.env.NODE_ENV === 'production') {
+	throw new Error('BETTER_AUTH_TRUSTED_ORIGINS must be set in production');
+}
+
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, { provider: 'postgresql' }),
-	trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',') ?? [],
+	trustedOrigins: trustedOrigins ?? ['http://localhost:3000'],
 	emailAndPassword: { enabled: true, disableSignUp: true },
 	user: {
 		additionalFields: {

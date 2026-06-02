@@ -12,6 +12,11 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
 		return;
 	}
 
+	if (!session.user.isActive) {
+		res.status(403).json({ error: 'Account is deactivated' });
+		return;
+	}
+
 	req.user = session.user;
 	req.session = session.session;
 	next();
