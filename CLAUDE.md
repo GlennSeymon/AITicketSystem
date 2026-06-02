@@ -64,8 +64,22 @@ Better Auth handles all auth. Key files:
 
 **Backend wiring:**
 - All Better Auth endpoints are mounted at `app.all('/api/auth/*', toNodeHandler(auth))`
-- Protect routes with the `requireAuth` middleware: `router.get('/example', requireAuth, handler)`
+- Protect routes with `requireAuth`: `router.get('/example', requireAuth, handler)`
+- Protect admin-only routes with both: `router.post('/example', requireAuth, requireAdmin, handler)`
+- `requireAuth` rejects unauthenticated requests (401) and deactivated accounts (403)
+- `requireAdmin` rejects non-admin users (403); always chain after `requireAuth`
 - Access the session user via `req.user` (typed as Better Auth's user with `role` and `isActive` fields)
+
+**Middleware files:**
+- `backend/src/require-auth.ts` — session validation + `isActive` check
+- `backend/src/require-admin.ts` — role check (`ADMIN` only)
+
+**Middleware mounting order in `index.ts` (must not change):**
+1. Auth rate limiter (`/api/auth/sign-in`, 10 req/15 min)
+2. Better Auth handler (`/api/auth/*`)
+3. Postmark webhook (when implemented — needs raw body, must come before `express.json()`)
+4. `express.json({ limit: '100kb' })`
+5. All other routes
 
 **Frontend wiring:**
 - Session state: `const { data, isPending } = authClient.useSession()`
