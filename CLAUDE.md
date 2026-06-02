@@ -63,6 +63,9 @@ docker compose up db-test -d  # Start test PostgreSQL on port 5434
 # E2E tests (from root) — stop dev servers first; tests run backend on :3002
 bun run test:e2e          # Headless Playwright run
 bun run test:e2e:ui       # Interactive Playwright UI
+
+# Writing E2E tests — use the e2e-test-writer agent:
+# "use e2e-test-writer to write tests for <feature>"
 ```
 
 ## Authentication
@@ -106,29 +109,13 @@ Better Auth handles all auth. Key files:
 
 **No custom auth endpoints** — do not add `/api/auth/login` or `/api/auth/me` routes; Better Auth provides these automatically under `/api/auth/*`.
 
-## E2E Testing
+## E2E Tests
 
-Playwright is configured at the root with an isolated test database.
+Use the **`e2e-test-writer`** agent to write or update Playwright tests — it has full context on the test infrastructure, session injection patterns, MUI selectors, and POM conventions.
 
-**Test database:** `tickets_test` on port 5434 (separate Docker service `db-test`). Dev database on 5433 is never touched by tests.
+Invoke it with: `use e2e-test-writer to write tests for <feature>`
 
-**Test backend:** runs on port 3002 (set via `PORT=3002` in `backend/.env.test`). Dev backend on 3001 is unaffected.
-
-**Vite proxy:** `vite.config.ts` reads `API_PORT` env var (`process.env.API_PORT ?? 3001`). Playwright passes `API_PORT=3002` to the frontend webServer so its `/api` proxy hits the test backend.
-
-**Global setup** (`e2e/global-setup.ts`):
-1. Loads `backend/.env.test` (parses the file manually — no dotenv dependency at root)
-2. Runs `prisma migrate deploy` against the test DB
-3. Runs `seed.test.ts` which clears and re-seeds all four auth tables
-
-**Test seed** (`backend/src/seed.test.ts`):
-- Clears session → verification → account → user (FK-safe order)
-- Inserts admin (`admin@e2e.test`, ADMIN role) and agent (`agent@e2e.test`, AGENT role)
-- Hashes passwords with `(await auth.$context).password.hash()` — same scrypt format Better Auth expects
-- `accountId` for credential provider is the user's **email** (not user ID)
-- Pre-seeds sessions with deterministic tokens (`e2e-admin-session-token`, `e2e-agent-session-token`) and expiry 2099-12-31 so tests can skip the login UI by injecting the cookie directly
-
-**Running tests:** stop dev servers first (tests use ports 3002 and 3000; dev uses 3001 and 3000 — port 3000 conflicts). `reuseExistingServer: false` ensures tests always start fresh servers against the test DB.
+The agent handles: auth fixtures, Page Object Models, `data-testid` placement, and DB state management. See `.claude/agents/e2e-test-writer.md` for its full instructions.
 
 ## Key Conventions
 
