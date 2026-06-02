@@ -60,7 +60,7 @@ bun run db:seed           # bun src/seed.ts
 docker compose up -d          # Start dev PostgreSQL on port 5433
 docker compose up db-test -d  # Start test PostgreSQL on port 5434
 
-# E2E tests (from root) — stop dev servers first; tests run backend on :3002
+# E2E tests (from root) — dev servers can stay running; tests use ports 3001+3002
 bun run test:e2e          # Headless Playwright run
 bun run test:e2e:ui       # Interactive Playwright UI
 

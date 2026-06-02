@@ -9,7 +9,7 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? 'github' : 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3001',
     trace: 'on-first-retry',
   },
   projects: [
@@ -28,9 +28,9 @@ export default defineConfig({
       timeout: 30_000,
     },
     {
-      command: 'API_PORT=3002 bun run dev',
+      command: 'API_PORT=3002 bun run dev -- --port 3001',
       cwd: path.join(__dirname, 'frontend'),
-      url: 'http://localhost:3000',
+      url: 'http://localhost:3001',
       reuseExistingServer: false,
       timeout: 60_000,
     },
