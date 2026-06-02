@@ -65,10 +65,7 @@ export default function LoginPage() {
 
 	async function onSubmit(values: LoginFormData) {
 		setServerError(null);
-		const { error } = await authClient.signIn.email({
-			email: values.email,
-			password: values.password,
-		});
+		const { error } = await authClient.signIn.email(values);
 		if (error) {
 			setServerError(error.message ?? 'Login failed. Please try again.');
 		} else {
