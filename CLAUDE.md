@@ -24,18 +24,24 @@ aiTicketSystem/
 ├── backend/
 │   ├── src/
 │   │   ├── index.ts          # Express entry point
+│   │   ├── seed.ts           # Dev database seed (admin + agent via Better Auth API)
+│   │   ├── seed.test.ts      # E2E test seed (direct Prisma inserts, pre-seeded sessions)
 │   │   ├── routes/           # Route handlers
 │   │   ├── services/         # ai.ts, email.ts, kb.ts, embeddings.ts
 │   │   └── middleware/       # auth, validation
 │   ├── prisma/
 │   │   └── schema.prisma
+│   ├── .env.test             # Test environment (DB port 5434, backend port 3002)
 │   └── prisma.config.ts      # Prisma 7 datasource config
 ├── frontend/
 │   ├── src/
 │   │   ├── main.tsx          # QueryClientProvider + ReactQueryDevtools
 │   │   └── App.tsx
-│   └── vite.config.ts        # /api proxy → localhost:3001
-├── docker-compose.yml        # pgvector/pgvector:pg16
+│   └── vite.config.ts        # /api proxy → localhost:${API_PORT:-3001}
+├── e2e/
+│   └── global-setup.ts       # Runs migrations + seed.test.ts before Playwright tests
+├── playwright.config.ts       # Playwright E2E config
+├── docker-compose.yml        # pgvector/pgvector:pg16 (dev :5433, test :5434)
 └── .env.example
 ```
 
@@ -51,7 +57,12 @@ bun run db:migrate        # prisma migrate dev
 bun run db:seed           # bun src/seed.ts
 
 # Docker
-docker compose up -d      # Start PostgreSQL on port 5433
+docker compose up -d          # Start dev PostgreSQL on port 5433
+docker compose up db-test -d  # Start test PostgreSQL on port 5434
+
+# E2E tests (from root) — stop dev servers first; tests run backend on :3002
+bun run test:e2e          # Headless Playwright run
+bun run test:e2e:ui       # Interactive Playwright UI
 ```
 
 ## Authentication
@@ -75,7 +86,7 @@ Better Auth handles all auth. Key files:
 - `backend/src/require-admin.ts` — role check (`ADMIN` only)
 
 **Middleware mounting order in `index.ts` (must not change):**
-1. Auth rate limiter (`/api/auth/sign-in`, 10 req/15 min)
+1. Auth rate limiter (`/api/auth/sign-in`, 10 req/15 min) — **production only** (`NODE_ENV === 'production'`)
 2. Better Auth handler (`/api/auth/*`)
 3. Postmark webhook (when implemented — needs raw body, must come before `express.json()`)
 4. `express.json({ limit: '100kb' })`
@@ -94,6 +105,30 @@ Better Auth handles all auth. Key files:
 **Creating users programmatically** — Better Auth uses scrypt (`salt:hash` hex format), not bcrypt. Use `(await auth.$context).password.hash(pw)` to generate a compatible hash. Never use `Bun.password.hash` or bcrypt directly.
 
 **No custom auth endpoints** — do not add `/api/auth/login` or `/api/auth/me` routes; Better Auth provides these automatically under `/api/auth/*`.
+
+## E2E Testing
+
+Playwright is configured at the root with an isolated test database.
+
+**Test database:** `tickets_test` on port 5434 (separate Docker service `db-test`). Dev database on 5433 is never touched by tests.
+
+**Test backend:** runs on port 3002 (set via `PORT=3002` in `backend/.env.test`). Dev backend on 3001 is unaffected.
+
+**Vite proxy:** `vite.config.ts` reads `API_PORT` env var (`process.env.API_PORT ?? 3001`). Playwright passes `API_PORT=3002` to the frontend webServer so its `/api` proxy hits the test backend.
+
+**Global setup** (`e2e/global-setup.ts`):
+1. Loads `backend/.env.test` (parses the file manually — no dotenv dependency at root)
+2. Runs `prisma migrate deploy` against the test DB
+3. Runs `seed.test.ts` which clears and re-seeds all four auth tables
+
+**Test seed** (`backend/src/seed.test.ts`):
+- Clears session → verification → account → user (FK-safe order)
+- Inserts admin (`admin@e2e.test`, ADMIN role) and agent (`agent@e2e.test`, AGENT role)
+- Hashes passwords with `(await auth.$context).password.hash()` — same scrypt format Better Auth expects
+- `accountId` for credential provider is the user's **email** (not user ID)
+- Pre-seeds sessions with deterministic tokens (`e2e-admin-session-token`, `e2e-agent-session-token`) and expiry 2099-12-31 so tests can skip the login UI by injecting the cookie directly
+
+**Running tests:** stop dev servers first (tests use ports 3002 and 3000; dev uses 3001 and 3000 — port 3000 conflicts). `reuseExistingServer: false` ensures tests always start fresh servers against the test DB.
 
 ## Key Conventions
 

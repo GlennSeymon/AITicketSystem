@@ -6,6 +6,12 @@
     "dev:backend": "bun run --cwd backend dev",
     "dev:frontend": "bun run --cwd frontend dev",
     "db:migrate": "bun run --cwd backend db:migrate",
-    "db:seed": "bun run --cwd backend db:seed"
+    "db:seed": "bun run --cwd backend db:seed",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^25.9.1"
   }
 }

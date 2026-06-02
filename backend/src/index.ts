@@ -7,16 +7,17 @@ import { requireAuth } from './require-auth';
 const app = express();
 const port = process.env.PORT || 3001;
 
-const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 10,
-	message: { error: 'Too many login attempts, please try again later' },
-	standardHeaders: true,
-	legacyHeaders: false,
-});
-
 // Better Auth and Postmark webhook must be mounted before express.json()
-app.use('/api/auth/sign-in', authLimiter);
+if (process.env.NODE_ENV === 'production') {
+	const authLimiter = rateLimit({
+		windowMs: 15 * 60 * 1000,
+		max: 10,
+		message: { error: 'Too many login attempts, please try again later' },
+		standardHeaders: true,
+		legacyHeaders: false,
+	});
+	app.use('/api/auth/sign-in', authLimiter);
+}
 app.all('/api/auth/*', toNodeHandler(auth));
 // app.post('/api/webhooks/postmark', rawBody, webhookHandler); // mount here when implemented
 
