@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createUserSchema, updateUserSchema } from '@repo/shared';
 import { auth } from '../auth';
 import { prisma } from '../prisma';
 import { Role } from '../generated/prisma/client';
@@ -24,22 +25,12 @@ router.get('/', asyncHandler(async (_req, res) => {
 }));
 
 router.post('/', asyncHandler(async (req, res) => {
-	const { name, email, password, role } = req.body as {
-		name?: string;
-		email?: string;
-		password?: string;
-		role?: string;
-	};
-
-	if (!name?.trim() || !email?.trim() || !password) {
-		res.status(400).json({ error: 'name, email, and password are required' });
+	const parsed = createUserSchema.safeParse(req.body);
+	if (!parsed.success) {
+		res.status(400).json({ error: parsed.error.issues[0].message });
 		return;
 	}
-
-	if (role !== undefined && !Object.values(Role).includes(role as Role)) {
-		res.status(400).json({ error: 'Invalid role' });
-		return;
-	}
+	const { name, email, password, role } = parsed.data;
 
 	const existing = await prisma.user.findUnique({ where: { email } });
 	if (existing) {
@@ -60,7 +51,7 @@ router.post('/', asyncHandler(async (req, res) => {
 				name,
 				email,
 				emailVerified: false,
-				role: (role as Role) ?? Role.AGENT,
+				role: role as Role,
 				isActive: true,
 				createdAt: now,
 				updatedAt: now,
@@ -85,17 +76,12 @@ router.post('/', asyncHandler(async (req, res) => {
 
 router.patch('/:id', asyncHandler(async (req, res) => {
 	const { id } = req.params;
-	const { name, email, role, isActive } = req.body as {
-		name?: string;
-		email?: string;
-		role?: string;
-		isActive?: boolean;
-	};
-
-	if (role !== undefined && !Object.values(Role).includes(role as Role)) {
-		res.status(400).json({ error: 'Invalid role' });
+	const parsed = updateUserSchema.safeParse(req.body);
+	if (!parsed.success) {
+		res.status(400).json({ error: parsed.error.issues[0].message });
 		return;
 	}
+	const { name, email, role, isActive } = parsed.data;
 
 	const user = await prisma.user.update({
 		where: { id },

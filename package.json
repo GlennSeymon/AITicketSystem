@@ -1,7 +1,7 @@
 {
   "name": "ai-ticket-system",
   "private": true,
-  "workspaces": ["backend", "frontend"],
+  "workspaces": ["backend", "frontend", "packages/shared"],
   "scripts": {
     "dev:backend": "bun run --cwd backend dev",
     "dev:frontend": "bun run --cwd frontend dev",

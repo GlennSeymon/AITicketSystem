@@ -21,6 +21,11 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 
 ```
 aiTicketSystem/
+├── packages/
+│   └── shared/               # @repo/shared — Zod schemas shared by frontend + backend
+│       └── src/
+│           ├── index.ts
+│           └── schemas/      # One file per resource (e.g. users.ts, tickets.ts)
 ├── backend/
 │   ├── src/
 │   │   ├── index.ts          # Express entry point
@@ -37,7 +42,7 @@ aiTicketSystem/
 │   ├── src/
 │   │   ├── main.tsx          # QueryClientProvider + ReactQueryDevtools
 │   │   └── App.tsx
-│   └── vite.config.ts        # /api proxy → localhost:${API_PORT:-3001}
+│   └── vite.config.ts        # /api proxy → localhost:${API_PORT:-3001}; fs.allow: ['..'] for @repo/shared
 ├── e2e/
 │   └── global-setup.ts       # Runs migrations + seed.test.ts before Playwright tests
 ├── playwright.config.ts       # Playwright E2E config
@@ -148,6 +153,8 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - Bun runs TypeScript natively — no tsc or ts-node needed
 - **Frontend HTTP calls use the shared Axios instance** from `frontend/src/lib/api.ts` — never use raw `axios` or `fetch` directly. The instance includes a 401 interceptor that redirects to `/login` on session expiry
 - **API functions live in `frontend/src/services/`** — one file per backend resource (e.g. `users.ts`, `tickets.ts`). Use `extractError` from `src/lib/api.ts` to surface server error messages in mutations
+- **Use Zod for all data validation** — validate request bodies in backend route handlers and parse/validate API responses on the frontend where needed. Resolve the Zod library ID via context7 before use.
+- **Shared Zod schemas live in `@repo/shared`** — any schema used by both frontend and backend goes in `packages/shared/src/schemas/`. Import as `import { mySchema } from '@repo/shared'`. Schemas used only on one side stay local. The shared package uses `peerDependencies` for Zod so consumers provide it.
 
 ## Documentation
 

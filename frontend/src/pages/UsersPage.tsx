@@ -2,8 +2,14 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { createUserSchema, updateUserSchema } from '@repo/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUsers, createUser, updateUser, deleteUser } from '../services/users';
+import {
+	getUsers,
+	createUser,
+	updateUser,
+	deleteUser,
+} from '../services/users';
 import type { User } from '../services/users';
 import {
 	Alert,
@@ -38,23 +44,8 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-const createSchema = z.object({
-	name: z.string().min(1, 'Required'),
-	email: z.string().email('Invalid email'),
-	password: z.string().min(8, 'Min 8 characters'),
-	role: z.enum(['ADMIN', 'AGENT']),
-});
-type CreateFormData = z.infer<typeof createSchema>;
-
-const editSchema = z.object({
-	name: z.string().min(1, 'Required'),
-	email: z.string().email('Invalid email'),
-	role: z.enum(['ADMIN', 'AGENT']),
-	isActive: z.boolean(),
-});
-type EditFormData = z.infer<typeof editSchema>;
-
-
+type CreateFormData = z.infer<typeof createUserSchema>;
+type EditFormData = z.infer<typeof updateUserSchema>;
 
 const PageContainer = styled(Container)(({ theme }) => ({
 	paddingTop: theme.spacing(4),
@@ -79,7 +70,13 @@ const RightAlignCell = styled(TableCell)({
 	textAlign: 'right',
 });
 
-function CreateUserDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function CreateUserDialog({
+	open,
+	onClose,
+}: {
+	open: boolean;
+	onClose: () => void;
+}) {
 	const queryClient = useQueryClient();
 	const [serverError, setServerError] = useState('');
 
@@ -89,7 +86,7 @@ function CreateUserDialog({ open, onClose }: { open: boolean; onClose: () => voi
 		reset,
 		formState: { errors },
 	} = useForm<CreateFormData>({
-		resolver: zodResolver(createSchema),
+		resolver: zodResolver(createUserSchema),
 		defaultValues: { name: '', email: '', password: '', role: 'AGENT' },
 	});
 
@@ -178,7 +175,11 @@ function CreateUserDialog({ open, onClose }: { open: boolean; onClose: () => voi
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleClose}>Cancel</Button>
-					<Button type='submit' variant='contained' disabled={mutation.isPending}>
+					<Button
+						type='submit'
+						variant='contained'
+						disabled={mutation.isPending}
+					>
 						{mutation.isPending ? 'Creating...' : 'Create'}
 					</Button>
 				</DialogActions>
@@ -204,7 +205,7 @@ function EditUserDialog({
 		handleSubmit,
 		formState: { errors },
 	} = useForm<EditFormData>({
-		resolver: zodResolver(editSchema),
+		resolver: zodResolver(updateUserSchema),
 		defaultValues: {
 			name: user.name,
 			email: user.email,
@@ -282,7 +283,9 @@ function EditUserDialog({
 							name='isActive'
 							render={({ field }) => (
 								<FormControlLabel
-									control={<Switch checked={field.value} onChange={field.onChange} />}
+									control={
+										<Switch checked={field.value} onChange={field.onChange} />
+									}
 									label='Active'
 								/>
 							)}
@@ -291,7 +294,11 @@ function EditUserDialog({
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleClose}>Cancel</Button>
-					<Button type='submit' variant='contained' disabled={mutation.isPending}>
+					<Button
+						type='submit'
+						variant='contained'
+						disabled={mutation.isPending}
+					>
 						{mutation.isPending ? 'Saving...' : 'Save'}
 					</Button>
 				</DialogActions>
@@ -306,7 +313,11 @@ export default function UsersPage() {
 	const [editUser, setEditUser] = useState<User | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
-	const { data: users, isPending, isError } = useQuery({ queryKey: ['users'], queryFn: getUsers });
+	const {
+		data: users,
+		isPending,
+		isError,
+	} = useQuery({ queryKey: ['users'], queryFn: getUsers });
 
 	const deleteMutation = useMutation({
 		mutationFn: (id: string) => deleteUser(id),
@@ -336,10 +347,18 @@ export default function UsersPage() {
 						<TableBody>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<TableRow key={i}>
-									<TableCell><Skeleton /></TableCell>
-									<TableCell><Skeleton /></TableCell>
-									<TableCell><Skeleton variant='rounded' width={60} height={24} /></TableCell>
-									<TableCell><Skeleton variant='rounded' width={60} height={24} /></TableCell>
+									<TableCell>
+										<Skeleton />
+									</TableCell>
+									<TableCell>
+										<Skeleton />
+									</TableCell>
+									<TableCell>
+										<Skeleton variant='rounded' width={60} height={24} />
+									</TableCell>
+									<TableCell>
+										<Skeleton variant='rounded' width={60} height={24} />
+									</TableCell>
 									<RightAlignCell>
 										<Skeleton variant='circular' width={28} height={28} />
 									</RightAlignCell>
@@ -428,18 +447,28 @@ export default function UsersPage() {
 				</Table>
 			</TableContainer>
 
-			<CreateUserDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+			<CreateUserDialog
+				open={createOpen}
+				onClose={() => setCreateOpen(false)}
+			/>
 
 			{editUser && (
-				<EditUserDialog open user={editUser} onClose={() => setEditUser(null)} />
+				<EditUserDialog
+					open
+					user={editUser}
+					onClose={() => setEditUser(null)}
+				/>
 			)}
 
-			<Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}>
+			<Dialog
+				open={Boolean(deleteTarget)}
+				onClose={() => setDeleteTarget(null)}
+			>
 				<DialogTitle>Delete User</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Are you sure you want to delete {deleteTarget?.name} ({deleteTarget?.email})? This
-						action cannot be undone.
+						Are you sure you want to delete {deleteTarget?.name} (
+						{deleteTarget?.email})? This action cannot be undone.
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions>
@@ -448,7 +477,9 @@ export default function UsersPage() {
 						variant='contained'
 						color='error'
 						disabled={deleteMutation.isPending}
-						onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+						onClick={() =>
+							deleteTarget && deleteMutation.mutate(deleteTarget.id)
+						}
 					>
 						{deleteMutation.isPending ? 'Deleting...' : 'Delete'}
 					</Button>

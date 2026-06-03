@@ -95,7 +95,8 @@ describe('UsersPage', () => {
 			await screen.findByText('Alice Admin');
 			await user.click(screen.getByRole('button', { name: /add user/i }));
 			await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /create/i }));
-			expect(await screen.findByText('Required')).toBeInTheDocument();
+			expect(await screen.findByText('Name is required')).toBeInTheDocument();
+			expect(screen.getByText('Min 8 characters')).toBeInTheDocument();
 		});
 
 		it('calls createUser with form data and closes the dialog on success', async () => {
