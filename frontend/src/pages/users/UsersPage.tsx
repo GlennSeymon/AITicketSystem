@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUsers, deleteUser } from '../../services/users';
-import type { User } from '../../services/users';
+import { getUsers, deleteUser, type User } from '../../services/users';
 import {
 	Alert,
 	Button,

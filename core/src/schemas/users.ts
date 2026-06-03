@@ -6,7 +6,7 @@ export const createUserSchema = z.object({
 	name: z.string().trim().min(1, 'Name is required'),
 	email: z.string().email('Invalid email'),
 	password: z.string().trim().min(8, 'Min 8 characters'),
-	role: roleEnum.default('AGENT'),
+	role: roleEnum,
 });
 
 export const updateUserSchema = z.object({

@@ -22,6 +22,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 ```
 aiTicketSystem/
 ├── core/                     # @repo/core — Zod schemas shared by frontend + backend
+│   ├── tsconfig.json         # Required for IDE TypeScript resolution
 │   └── src/
 │       ├── index.ts
 │       └── schemas/          # One file per resource (e.g. users.ts, tickets.ts)
@@ -126,7 +127,7 @@ Component tests use **Vitest** + **React Testing Library** and live alongside th
 - `frontend/src/test/renderWithProviders.tsx` — wrap any component with `QueryClientProvider`; returns `{ user, ...renderResult }` where `user` is a pre-configured `userEvent` instance
 
 **Writing tests:**
-- Mock service modules at the top of the file: `vi.mock('../services/users')`
+- Mock service modules at the top of the file using a path relative to the test file: `vi.mock('../../services/users')`
 - Use `renderWithProviders(<MyPage />)` and destructure `user` for interactions
 - Prefer `findBy*` (async) when waiting for data to load; use `within(dialog)` to scope queries to open dialogs
 - MUI-specific: `Switch` has `role="switch"` not `role="checkbox"`; query Chips by their label text
@@ -154,6 +155,7 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - **API functions live in `frontend/src/services/`** — one file per backend resource (e.g. `users.ts`, `tickets.ts`). Use `extractError` from `src/lib/api.ts` to surface server error messages in mutations
 - **Use Zod for all data validation** — validate request bodies in backend route handlers and parse/validate API responses on the frontend where needed. Resolve the Zod library ID via context7 before use.
 - **Shared Zod schemas live in `@repo/core`** — any schema used by both frontend and backend goes in `core/src/schemas/`. Import as `import { mySchema } from '@repo/core'`. Schemas used only on one side stay local. The shared package uses `peerDependencies` for Zod so consumers provide it. Each schema file also exports `z.infer` types with domain names (e.g. `CreateUserInput`, `UpdateUserInput`) — import these instead of re-inferring locally.
+- **Never use `.default()` in shared schemas** — Zod's `.default()` splits the schema into mismatched input/output types, which breaks `zodResolver` in react-hook-form with a type error on the `resolver` prop. Apply defaults in the form's `defaultValues` instead.
 
 ## Documentation
 
