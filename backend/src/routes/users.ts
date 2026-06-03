@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createUserSchema, updateUserSchema } from '@repo/shared';
+import { createUserSchema, updateUserSchema } from '@repo/core';
 import { auth } from '../auth';
 import { prisma } from '../prisma';
 import { Role } from '../generated/prisma/client';

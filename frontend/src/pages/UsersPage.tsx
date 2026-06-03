@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { createUserSchema, updateUserSchema } from '@repo/shared';
+import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUserInput } from '@repo/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
 	getUsers,
@@ -44,8 +43,8 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-type CreateFormData = z.infer<typeof createUserSchema>;
-type EditFormData = z.infer<typeof updateUserSchema>;
+type CreateFormData = CreateUserInput;
+type EditFormData = UpdateUserInput;
 
 const PageContainer = styled(Container)(({ theme }) => ({
 	paddingTop: theme.spacing(4),
