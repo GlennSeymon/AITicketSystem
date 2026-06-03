@@ -124,6 +124,8 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - Prisma 7: datasource URL lives in `prisma.config.ts`, not `schema.prisma`
 - MUI v9: do not use the `sx` prop for styling. Use `styled()` components instead
 - Bun runs TypeScript natively — no tsc or ts-node needed
+- **Frontend HTTP calls use the shared Axios instance** from `frontend/src/lib/api.ts` — never use raw `axios` or `fetch` directly. The instance includes a 401 interceptor that redirects to `/login` on session expiry
+- **API functions live in `frontend/src/services/`** — one file per backend resource (e.g. `users.ts`, `tickets.ts`). Use `extractError` from `src/lib/api.ts` to surface server error messages in mutations
 
 ## Documentation
 

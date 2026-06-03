@@ -3,6 +3,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getUsers, createUser, updateUser, deleteUser } from '../services/users';
+import type { User } from '../services/users';
 import {
 	Alert,
 	Button,
@@ -36,15 +38,6 @@ import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-type User = {
-	id: string;
-	name: string;
-	email: string;
-	role: 'ADMIN' | 'AGENT';
-	isActive: boolean;
-	createdAt: string;
-};
-
 const createSchema = z.object({
 	name: z.string().min(1, 'Required'),
 	email: z.string().email('Invalid email'),
@@ -61,45 +54,7 @@ const editSchema = z.object({
 });
 type EditFormData = z.infer<typeof editSchema>;
 
-async function fetchUsers(): Promise<User[]> {
-	const res = await fetch('/api/users');
-	if (!res.ok) throw new Error('Failed to load users');
-	return res.json();
-}
 
-async function apiCreateUser(data: CreateFormData): Promise<User> {
-	const res = await fetch('/api/users', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(data),
-	});
-	if (!res.ok) {
-		const body = await res.json();
-		throw new Error(body.error ?? 'Failed to create user');
-	}
-	return res.json();
-}
-
-async function apiUpdateUser(id: string, data: EditFormData): Promise<User> {
-	const res = await fetch(`/api/users/${id}`, {
-		method: 'PATCH',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(data),
-	});
-	if (!res.ok) {
-		const body = await res.json();
-		throw new Error(body.error ?? 'Failed to update user');
-	}
-	return res.json();
-}
-
-async function apiDeleteUser(id: string): Promise<void> {
-	const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-	if (!res.ok) {
-		const body = await res.json();
-		throw new Error(body.error ?? 'Failed to delete user');
-	}
-}
 
 const PageContainer = styled(Container)(({ theme }) => ({
 	paddingTop: theme.spacing(4),
@@ -139,7 +94,7 @@ function CreateUserDialog({ open, onClose }: { open: boolean; onClose: () => voi
 	});
 
 	const mutation = useMutation({
-		mutationFn: apiCreateUser,
+		mutationFn: createUser,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['users'] });
 			reset();
@@ -259,7 +214,7 @@ function EditUserDialog({
 	});
 
 	const mutation = useMutation({
-		mutationFn: (data: EditFormData) => apiUpdateUser(user.id, data),
+		mutationFn: (data: EditFormData) => updateUser(user.id, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['users'] });
 			setServerError('');
@@ -351,10 +306,10 @@ export default function UsersPage() {
 	const [editUser, setEditUser] = useState<User | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
-	const { data: users, isPending, isError } = useQuery({ queryKey: ['users'], queryFn: fetchUsers });
+	const { data: users, isPending, isError } = useQuery({ queryKey: ['users'], queryFn: getUsers });
 
 	const deleteMutation = useMutation({
-		mutationFn: (id: string) => apiDeleteUser(id),
+		mutationFn: (id: string) => deleteUser(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['users'] });
 			setDeleteTarget(null);
