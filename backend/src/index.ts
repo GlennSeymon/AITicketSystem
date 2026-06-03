@@ -1,8 +1,11 @@
 import express from 'express';
+import type { ErrorRequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
 import { requireAuth } from './require-auth';
+import { requireAdmin } from './require-admin';
+import usersRouter from './routes/users';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -30,6 +33,17 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/me', requireAuth, (req, res) => {
 	res.json({ user: req.user });
 });
+
+app.use('/api/users', requireAuth, requireAdmin, usersRouter);
+
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+	const code = (err as { code?: string })?.code;
+	if (code === 'P2002') return void res.status(409).json({ error: 'Email already in use' });
+	if (code === 'P2025') return void res.status(404).json({ error: 'Not found' });
+	console.error(err);
+	res.status(500).json({ error: 'Internal server error' });
+};
+app.use(errorHandler);
 
 app.listen(port, () => {
 	console.log(`Backend running on http://localhost:${port}`);
