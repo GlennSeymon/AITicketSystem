@@ -15,7 +15,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **Auth:** Better Auth (email/password, database sessions)
 - **AI:** Anthropic Claude API (Haiku for classification/summaries, Sonnet for drafting/polish)
 - **Embeddings:** @xenova/transformers — local, no API key required
-- **Email:** Inbound webhook (`POST /api/webhooks/inbound-email`, Bearer token auth); outbound via Postmark (future)
+- **Email:** Inbound webhook (`POST /api/webhooks/inbound-email`, `x-webhook-secret` header auth); outbound via Postmark (future)
 
 ## Project Structure
 
