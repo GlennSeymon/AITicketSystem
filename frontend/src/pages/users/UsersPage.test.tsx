@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import UsersPage from './UsersPage';
-import { getUsers, createUser, updateUser, deleteUser } from '../services/users';
-import type { User } from '../services/users';
-import { renderWithProviders } from '../test/renderWithProviders';
+import { getUsers, createUser, updateUser, deleteUser } from '../../services/users';
+import type { User } from '../../services/users';
+import { renderWithProviders } from '../../test/renderWithProviders';
 
-vi.mock('../services/users');
+vi.mock('../../services/users');
 
 const mockUsers: User[] = [
 	{

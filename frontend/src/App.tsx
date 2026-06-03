@@ -6,7 +6,7 @@ import NavBar from './components/NavBar';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-import UsersPage from './pages/UsersPage';
+import UsersPage from './pages/users/UsersPage';
 import theme from './theme';
 
 function AuthLayout() {
