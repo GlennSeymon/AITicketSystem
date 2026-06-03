@@ -15,7 +15,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **Auth:** Better Auth (email/password, database sessions)
 - **AI:** Anthropic Claude API (Haiku for classification/summaries, Sonnet for drafting/polish)
 - **Embeddings:** @xenova/transformers — local, no API key required
-- **Email:** Postmark (inbound webhook + outbound)
+- **Email:** Inbound webhook (`POST /api/webhooks/inbound-email`, Bearer token auth); outbound via Postmark (future)
 
 ## Project Structure
 
@@ -99,9 +99,8 @@ Better Auth handles all auth. Key files:
 **Middleware mounting order in `index.ts` (must not change):**
 1. Auth rate limiter (`/api/auth/sign-in`, 10 req/15 min) — **production only** (`NODE_ENV === 'production'`)
 2. Better Auth handler (`/api/auth/*`)
-3. Postmark webhook (when implemented — needs raw body, must come before `express.json()`)
-4. `express.json({ limit: '100kb' })`
-5. All other routes
+3. `express.json({ limit: '100kb' })`
+4. All other routes (`/api/tickets`, `/api/webhooks`, `/api/users`, …)
 
 **Frontend wiring:**
 - Session state: `const { data, isPending } = authClient.useSession()`
@@ -150,6 +149,7 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - Frontend proxies `/api/*` to the backend via Vite — no CORS config needed
 - Prisma 7: datasource URL lives in `prisma.config.ts`, not `schema.prisma`
 - MUI v9: do not use the `sx` prop for styling. Use `styled()` components instead
+- **MUI v9 + react-hook-form `TextField`**: `inputRef` is removed — pass the Controller `ref` via `slotProps={{ htmlInput: { ref } }}`. Use `helperText={errors.field?.message ?? ' '}` only when the form has room to spare; omit the `?? ' '` fallback in height-constrained dialogs (the fallback reserves ~23px per field even when there is no error). Always check context7 (`/websites/mui_material-ui`) before writing MUI form code.
 - Bun runs TypeScript natively — no tsc or ts-node needed
 - **Frontend HTTP calls use the shared Axios instance** from `frontend/src/lib/api.ts` — never use raw `axios` or `fetch` directly. The instance includes a 401 interceptor that redirects to `/login` on session expiry
 - **API functions live in `frontend/src/services/`** — one file per backend resource (e.g. `users.ts`, `tickets.ts`). Use `extractError` from `src/lib/api.ts` to surface server error messages in mutations
@@ -159,17 +159,19 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 
 ## Documentation
 
-Always use **context7** to fetch up-to-date documentation before writing code for any library. Do not rely on training data for library APIs.
+**Always fetch context7 docs before writing any library code.** Do not rely on training data — APIs change between major versions and training data is often stale. This is a required step, not optional.
 
 ```
-# Resolve a library ID first, then query docs
+# Required workflow for any library usage:
 mcp__context7__resolve-library-id  →  mcp__context7__query-docs
 ```
+
+This applies to every library in this project: MUI, Prisma, Better Auth, react-hook-form, TanStack Query, Zod, Express, Bun, Postmark, and any others. Query with a specific question (e.g. "TextField error helperText react-hook-form Controller ref MUI v9") rather than just a library name.
 
 Key library IDs for this project:
 - Bun: `/llmstxt/bun_llms_txt`
 - Prisma: resolve via context7 before use (Prisma 7 has breaking changes from v5)
-- MUI: resolve via context7 (v9 has breaking changes from v5)
+- MUI: `/websites/mui_material-ui` (v9 has breaking changes from v5)
 - Express: resolve via context7
 - TanStack Query: resolve via context7
 
@@ -181,11 +183,11 @@ Copy `backend/.env.example` (or root `.env.example`) to `backend/.env` and fill 
 DATABASE_URL="postgresql://helpdesk:helpdesk@localhost:5433/tickets"
 BETTER_AUTH_SECRET="..."
 BETTER_AUTH_URL="http://localhost:3001"
-POSTMARK_TOKEN="..."
 ANTHROPIC_API_KEY="..."
 ADMIN_EMAIL="..."
 ADMIN_PASSWORD="..."
 AGENT_EMAIL="..."
 AGENT_PASSWORD="..."
 PORT=3001
+WEBHOOK_SECRET="..."
 ```

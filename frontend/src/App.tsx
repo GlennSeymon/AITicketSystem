@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import UsersPage from './pages/users/UsersPage';
+import TicketsPage from './pages/tickets/TicketsPage';
 import theme from './theme';
 
 function AuthLayout() {
@@ -28,6 +29,7 @@ export default function App() {
 					<Route element={<ProtectedRoute />}>
 						<Route element={<AuthLayout />}>
 							<Route index element={<HomePage />} />
+							<Route path='/tickets' element={<TicketsPage />} />
 							<Route element={<AdminRoute />}>
 								<Route path='/users' element={<UsersPage />} />
 							</Route>

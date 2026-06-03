@@ -91,24 +91,24 @@ model verification {
 }
 
 model Ticket {
-  id              String         @id @default(cuid())
-  subject         String
-  body            String
-  fromEmail       String
-  fromName        String?
-  postmarkMessageId String?      @unique
-  status          TicketStatus   @default(OPEN)
-  category        TicketCategory @default(UNCATEGORISED)
-  aiDraft         String?
-  aiSummary       String?
-  messages        Message[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  id                Int             @id @default(autoincrement())
+  subject           String
+  body              String
+  fromEmail         String
+  fromName          String
+  postmarkMessageId String?         @unique
+  status            TicketStatus    @default(OPEN)
+  category          TicketCategory?
+  aiDraft           String?
+  aiSummary         String?
+  messages          Message[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model Message {
   id        String           @id @default(cuid())
-  ticketId  String
+  ticketId  Int
   ticket    Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   body      String
   direction MessageDirection

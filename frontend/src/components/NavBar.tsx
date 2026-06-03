@@ -36,6 +36,9 @@ export default function NavBar() {
 			<Toolbar>
 				<NavLink component={Link} to='/'>AI Ticket System</NavLink>
 				<GrowBox />
+				<NavLink component={Link} to='/tickets'>
+					Tickets
+				</NavLink>
 				{data?.user.role === 'ADMIN' && (
 					<NavLink component={Link} to='/users'>
 						Users

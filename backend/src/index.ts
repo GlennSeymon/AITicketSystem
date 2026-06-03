@@ -6,11 +6,13 @@ import { auth } from './auth';
 import { requireAuth } from './require-auth';
 import { requireAdmin } from './require-admin';
 import usersRouter from './routes/users';
+import ticketsRouter from './routes/tickets';
+import webhooksRouter from './routes/webhooks';
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Better Auth and Postmark webhook must be mounted before express.json()
+// Better Auth must be mounted before express.json()
 if (process.env.NODE_ENV === 'production') {
 	const authLimiter = rateLimit({
 		windowMs: 15 * 60 * 1000,
@@ -22,7 +24,6 @@ if (process.env.NODE_ENV === 'production') {
 	app.use('/api/auth/sign-in', authLimiter);
 }
 app.all('/api/auth/*', toNodeHandler(auth));
-// app.post('/api/webhooks/postmark', rawBody, webhookHandler); // mount here when implemented
 
 app.use(express.json({ limit: '100kb' }));
 
@@ -35,6 +36,8 @@ app.get('/api/me', requireAuth, (req, res) => {
 });
 
 app.use('/api/users', requireAuth, requireAdmin, usersRouter);
+app.use('/api/tickets', requireAuth, ticketsRouter);
+app.use('/api/webhooks', webhooksRouter);
 
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 	const code = (err as { code?: string })?.code;

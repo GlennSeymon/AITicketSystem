@@ -1,0 +1,20 @@
+import { z } from 'zod';
+
+export const ticketStatusEnum = z.enum(['OPEN', 'RESOLVED', 'CLOSED']);
+export const ticketCategoryEnum = z.enum(['GENERAL', 'TECHNICAL', 'REFUND', 'UNCATEGORISED']);
+
+export const createTicketSchema = z.object({
+	subject: z.string().trim().min(1, 'Subject is required'),
+	fromEmail: z.string().email('Invalid email'),
+	fromName: z.string().trim().min(1, 'From name is required'),
+	body: z.string().trim().min(1, 'Body is required'),
+	category: ticketCategoryEnum.optional(),
+});
+
+export const updateTicketSchema = z.object({
+	status: ticketStatusEnum.optional(),
+	category: ticketCategoryEnum.optional(),
+});
+
+export type CreateTicketInput = z.infer<typeof createTicketSchema>;
+export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;

@@ -83,11 +83,11 @@ export function EditUserDialog({
 							render={({ field: { ref, ...rest } }) => (
 								<TextField
 									{...rest}
-									inputRef={ref}
+									slotProps={{ htmlInput: { ref } }}
 									label='Name'
 									fullWidth
 									error={!!errors.name}
-									helperText={errors.name?.message}
+									helperText={errors.name?.message ?? ' '}
 								/>
 							)}
 						/>
@@ -97,12 +97,12 @@ export function EditUserDialog({
 							render={({ field: { ref, ...rest } }) => (
 								<TextField
 									{...rest}
-									inputRef={ref}
+									slotProps={{ htmlInput: { ref } }}
 									label='Email'
 									type='email'
 									fullWidth
 									error={!!errors.email}
-									helperText={errors.email?.message}
+									helperText={errors.email?.message ?? ' '}
 								/>
 							)}
 						/>

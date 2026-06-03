@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createUserSchema, type CreateUserInput } from '@repo/core';
+import { createTicketSchema, type CreateTicketInput } from '@repo/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createUser } from '../../services/users';
+import { createTicket } from '../../services/tickets';
 import {
 	Alert,
 	Button,
@@ -22,12 +22,12 @@ import {
 const FieldStack = styled('div')({
 	display: 'flex',
 	flexDirection: 'column',
-	gap: '1rem',
-	paddingTop: '0.5rem',
-	minWidth: 400,
+	gap: '0.5rem',
+	paddingTop: '0.25rem',
+	minWidth: 480,
 });
 
-export function CreateUserDialog({
+export function CreateTicketDialog({
 	open,
 	onClose,
 }: {
@@ -42,15 +42,15 @@ export function CreateUserDialog({
 		handleSubmit,
 		reset,
 		formState: { errors },
-	} = useForm<CreateUserInput>({
-		resolver: zodResolver(createUserSchema),
-		defaultValues: { name: '', email: '', password: '', role: 'AGENT' },
+	} = useForm<CreateTicketInput>({
+		resolver: zodResolver(createTicketSchema),
+		defaultValues: { subject: '', fromEmail: '', fromName: '', body: '', category: undefined },
 	});
 
 	const mutation = useMutation({
-		mutationFn: createUser,
+		mutationFn: createTicket,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['users'] });
+			queryClient.invalidateQueries({ queryKey: ['tickets'] });
 			reset();
 			setServerError('');
 			onClose();
@@ -67,63 +67,86 @@ export function CreateUserDialog({
 	return (
 		<Dialog open={open} onClose={handleClose}>
 			<form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
-				<DialogTitle>Add User</DialogTitle>
+				<DialogTitle>Create Ticket</DialogTitle>
 				<DialogContent>
 					<FieldStack>
 						{serverError && <Alert severity='error'>{serverError}</Alert>}
 						<Controller
 							control={control}
-							name='name'
+							name='subject'
 							render={({ field: { ref, ...rest } }) => (
 								<TextField
 									{...rest}
 									slotProps={{ htmlInput: { ref } }}
-									label='Name'
+									label='Subject'
 									fullWidth
-									error={!!errors.name}
-									helperText={errors.name?.message ?? ' '}
+									error={!!errors.subject}
+									helperText={errors.subject?.message}
 								/>
 							)}
 						/>
 						<Controller
 							control={control}
-							name='email'
+							name='fromName'
 							render={({ field: { ref, ...rest } }) => (
 								<TextField
 									{...rest}
 									slotProps={{ htmlInput: { ref } }}
-									label='Email'
+									label='From Name'
+									fullWidth
+									error={!!errors.fromName}
+									helperText={errors.fromName?.message}
+								/>
+							)}
+						/>
+						<Controller
+							control={control}
+							name='fromEmail'
+							render={({ field: { ref, ...rest } }) => (
+								<TextField
+									{...rest}
+									slotProps={{ htmlInput: { ref } }}
+									label='From Email'
 									type='email'
 									fullWidth
-									error={!!errors.email}
-									helperText={errors.email?.message ?? ' '}
+									error={!!errors.fromEmail}
+									helperText={errors.fromEmail?.message}
 								/>
 							)}
 						/>
 						<Controller
 							control={control}
-							name='password'
+							name='body'
 							render={({ field: { ref, ...rest } }) => (
 								<TextField
 									{...rest}
 									slotProps={{ htmlInput: { ref } }}
-									label='Password'
-									type='password'
+									label='Message'
+									multiline
+									rows={3}
 									fullWidth
-									error={!!errors.password}
-									helperText={errors.password?.message ?? ' '}
+									error={!!errors.body}
+									helperText={errors.body?.message}
 								/>
 							)}
 						/>
 						<Controller
 							control={control}
-							name='role'
-							render={({ field }) => (
+							name='category'
+							render={({ field: { value, onChange, ...rest } }) => (
 								<FormControl fullWidth>
-									<InputLabel>Role</InputLabel>
-									<Select {...field} label='Role'>
-										<MenuItem value='AGENT'>Agent</MenuItem>
-										<MenuItem value='ADMIN'>Admin</MenuItem>
+									<InputLabel>Category</InputLabel>
+									<Select
+										{...rest}
+										value={value ?? ''}
+										onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
+										label='Category'
+									>
+										<MenuItem value=''><em>None</em></MenuItem>
+										<MenuItem value='GENERAL'>General</MenuItem>
+										<MenuItem value='TECHNICAL'>Technical</MenuItem>
+										<MenuItem value='REFUND'>Refund</MenuItem>
+										<MenuItem value='UNCATEGORISED'>Uncategorised</MenuItem>
 									</Select>
 								</FormControl>
 							)}
@@ -132,11 +155,7 @@ export function CreateUserDialog({
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={handleClose}>Cancel</Button>
-					<Button
-						type='submit'
-						variant='contained'
-						disabled={mutation.isPending}
-					>
+					<Button type='submit' variant='contained' disabled={mutation.isPending}>
 						{mutation.isPending ? 'Creating...' : 'Create'}
 					</Button>
 				</DialogActions>
