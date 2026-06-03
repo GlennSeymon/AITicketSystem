@@ -60,6 +60,9 @@ bun run db:seed           # bun src/seed.ts
 docker compose up -d          # Start dev PostgreSQL on port 5433
 docker compose up db-test -d  # Start test PostgreSQL on port 5434
 
+# Component tests (from root)
+bun run test:components   # Vitest run (headless, single pass)
+
 # E2E tests (from root) — dev servers can stay running; tests use ports 3001+3002
 bun run test:e2e          # Headless Playwright run
 bun run test:e2e:ui       # Interactive Playwright UI
@@ -108,6 +111,25 @@ Better Auth handles all auth. Key files:
 **Creating users programmatically** — Better Auth uses scrypt (`salt:hash` hex format), not bcrypt. Use `(await auth.$context).password.hash(pw)` to generate a compatible hash. Never use `Bun.password.hash` or bcrypt directly.
 
 **No custom auth endpoints** — do not add `/api/auth/login` or `/api/auth/me` routes; Better Auth provides these automatically under `/api/auth/*`.
+
+## Component Tests
+
+Component tests use **Vitest** + **React Testing Library** and live alongside the components they test (`*.test.tsx`).
+
+**Infrastructure files:**
+- `frontend/vite.config.ts` — Vitest config (`environment: 'jsdom'`, `clearMocks: true`, `setupFiles`)
+- `frontend/src/test/setup.ts` — imports `@testing-library/jest-dom` matchers, stubs `window.matchMedia` / `ResizeObserver` for MUI, and calls `afterEach(cleanup)` (required — RTL v16 does not auto-cleanup without Vitest globals enabled)
+- `frontend/src/test/renderWithProviders.tsx` — wrap any component with `QueryClientProvider`; returns `{ user, ...renderResult }` where `user` is a pre-configured `userEvent` instance
+
+**Writing tests:**
+- Mock service modules at the top of the file: `vi.mock('../services/users')`
+- Use `renderWithProviders(<MyPage />)` and destructure `user` for interactions
+- Prefer `findBy*` (async) when waiting for data to load; use `within(dialog)` to scope queries to open dialogs
+- MUI-specific: `Switch` has `role="switch"` not `role="checkbox"`; query Chips by their label text
+
+**Key library IDs for context7:**
+- React Testing Library: `/testing-library/testing-library-docs`
+- Vitest: `/vitest-dev/vitest`
 
 ## E2E Tests
 
