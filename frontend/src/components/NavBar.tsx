@@ -34,7 +34,7 @@ export default function NavBar() {
 	return (
 		<StyledAppBar>
 			<Toolbar>
-				<Typography variant='h6'>AI Ticket System</Typography>
+				<NavLink component={Link} to='/'>AI Ticket System</NavLink>
 				<GrowBox />
 				{data?.user.role === 'ADMIN' && (
 					<NavLink component={Link} to='/users'>

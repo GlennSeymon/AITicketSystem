@@ -9,8 +9,8 @@ import {
 	Alert,
 	Button,
 	Chip,
-	CircularProgress,
 	Container,
+	Skeleton,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -320,7 +320,34 @@ export default function UsersPage() {
 	if (isPending) {
 		return (
 			<PageContainer>
-				<CircularProgress />
+				<PageHeader>
+					<Skeleton variant='text' width={200} height={40} />
+					<Skeleton variant='rounded' width={120} height={36} />
+				</PageHeader>
+				<TableContainer component={Paper}>
+					<Table>
+						<TableHead>
+							<TableRow>
+								{['Name', 'Email', 'Role', 'Status', 'Actions'].map((col) => (
+									<TableCell key={col}>{col}</TableCell>
+								))}
+							</TableRow>
+						</TableHead>
+						<TableBody>
+							{Array.from({ length: 5 }).map((_, i) => (
+								<TableRow key={i}>
+									<TableCell><Skeleton /></TableCell>
+									<TableCell><Skeleton /></TableCell>
+									<TableCell><Skeleton variant='rounded' width={60} height={24} /></TableCell>
+									<TableCell><Skeleton variant='rounded' width={60} height={24} /></TableCell>
+									<RightAlignCell>
+										<Skeleton variant='circular' width={28} height={28} />
+									</RightAlignCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</TableContainer>
 			</PageContainer>
 		);
 	}
