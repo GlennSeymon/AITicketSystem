@@ -68,7 +68,7 @@ docker compose up db-test -d  # Start test PostgreSQL on port 5434
 # Component tests (from root)
 bun run test:components   # Vitest run (headless, single pass)
 
-# E2E tests (from root) — dev servers can stay running; tests use ports 3001+3002
+# E2E tests (from root) — stop dev backend first (test frontend takes port 3001)
 bun run test:e2e          # Headless Playwright run
 bun run test:e2e:ui       # Interactive Playwright UI
 

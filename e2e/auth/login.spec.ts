@@ -223,7 +223,7 @@ test.describe('Role-based access control for /users', () => {
 		await adminPage.goto('/users');
 		await expect(adminPage).toHaveURL('/users');
 		await expect(
-			adminPage.getByRole('heading', { name: 'Users' }),
+			adminPage.getByRole('heading', { name: 'User Management' }),
 		).toBeVisible();
 	});
 
@@ -233,7 +233,7 @@ test.describe('Role-based access control for /users', () => {
 		await expect(agentPage).toHaveURL('/');
 		// The Users heading must not be present
 		await expect(
-			agentPage.getByRole('heading', { name: 'Users' }),
+			agentPage.getByRole('heading', { name: 'User Management' }),
 		).not.toBeVisible();
 	});
 });
