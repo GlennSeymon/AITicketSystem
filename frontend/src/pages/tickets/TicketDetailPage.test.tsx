@@ -98,23 +98,23 @@ describe('TicketDetailPage', () => {
 			expect(screen.getByText(/Alice Tester.*alice@example\.com/)).toBeInTheDocument();
 		});
 
-		it('renders the status chip', async () => {
+		it('renders the current status in the status dropdown', async () => {
 			renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			expect(screen.getByText('OPEN')).toBeInTheDocument();
+			expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent('Open');
 		});
 
-		it('renders the category chip when category is set', async () => {
+		it('renders the current category in the category dropdown', async () => {
 			renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			expect(screen.getByText('TECHNICAL')).toBeInTheDocument();
+			expect(screen.getByRole('combobox', { name: 'Category' })).toHaveTextContent('Technical');
 		});
 
-		it('shows a dash when category is null', async () => {
+		it('shows "None" in the category dropdown when category is null', async () => {
 			vi.mocked(getTicket).mockResolvedValue({ ...mockTicket, category: null });
 			renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			expect(screen.getByText('—')).toBeInTheDocument();
+			expect(screen.getByRole('combobox', { name: 'Category' })).toHaveTextContent('None');
 		});
 
 		it('renders inbound message content', async () => {
@@ -135,7 +135,7 @@ describe('TicketDetailPage', () => {
 		it('shows "Unassigned" in the dropdown when no agent is assigned', async () => {
 			renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			expect(screen.getByRole('combobox')).toHaveTextContent('Unassigned');
+			expect(screen.getByRole('combobox', { name: 'Assigned to' })).toHaveTextContent('Unassigned');
 		});
 
 		it('shows the assigned agent name when an agent is already assigned', async () => {
@@ -145,13 +145,13 @@ describe('TicketDetailPage', () => {
 			});
 			renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			expect(screen.getByRole('combobox')).toHaveTextContent('Agent Alice');
+			expect(screen.getByRole('combobox', { name: 'Assigned to' })).toHaveTextContent('Agent Alice');
 		});
 
 		it('lists all available agents in the dropdown', async () => {
 			const { user } = renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			await user.click(screen.getByRole('combobox'));
+			await user.click(screen.getByRole('combobox', { name: 'Assigned to' }));
 			expect(screen.getByRole('option', { name: 'Unassigned' })).toBeInTheDocument();
 			expect(screen.getByRole('option', { name: 'Agent Alice' })).toBeInTheDocument();
 			expect(screen.getByRole('option', { name: 'Agent Bob' })).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe('TicketDetailPage', () => {
 		it('calls updateTicket with the agent ID when an agent is selected', async () => {
 			const { user } = renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			await user.click(screen.getByRole('combobox'));
+			await user.click(screen.getByRole('combobox', { name: 'Assigned to' }));
 			await user.click(screen.getByRole('option', { name: 'Agent Alice' }));
 			await waitFor(() =>
 				expect(updateTicket).toHaveBeenCalledWith(1, { assignedAgentId: 'agent-1' })
@@ -174,7 +174,7 @@ describe('TicketDetailPage', () => {
 			});
 			const { user } = renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			await user.click(screen.getByRole('combobox'));
+			await user.click(screen.getByRole('combobox', { name: 'Assigned to' }));
 			await user.click(screen.getByRole('option', { name: 'Unassigned' }));
 			await waitFor(() =>
 				expect(updateTicket).toHaveBeenCalledWith(1, { assignedAgentId: null })

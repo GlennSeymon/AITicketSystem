@@ -165,7 +165,7 @@ router.patch(
 				where: { id },
 				data: {
 					...(status !== undefined && { status: status as TicketStatus }),
-					...(category !== undefined && { category: category as TicketCategory }),
+					...(category !== undefined && { category: category as TicketCategory | null }),
 					...(assignedAgentId !== undefined && { assignedAgentId }),
 				},
 				select: TICKET_SELECT,

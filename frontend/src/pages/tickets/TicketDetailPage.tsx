@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTicket, updateTicket } from '../../services/tickets';
 import { getAgents } from '../../services/agents';
+import { TicketStatus, TicketCategory } from '@repo/core';
 import {
 	Alert,
 	Button,
-	Chip,
 	Container,
 	Divider,
 	FormControl,
 	Grid,
+	InputLabel,
 	MenuItem,
 	Paper,
 	Select,
@@ -19,7 +20,7 @@ import {
 	styled,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { formatDate, statusColor } from '../../lib/format';
+import { formatDate, toTitleCase } from '../../lib/format';
 
 const PageContainer = styled(Container)(({ theme }) => ({
 	paddingTop: theme.spacing(4),
@@ -49,6 +50,18 @@ const MetaLabel = styled(Typography)(({ theme }) => ({
 
 const MetaValue = styled(Typography)({
 	fontSize: '0.875rem',
+});
+
+const SrOnlyLabel = styled(InputLabel)({
+	position: 'absolute',
+	width: 1,
+	height: 1,
+	padding: 0,
+	margin: -1,
+	overflow: 'hidden',
+	clip: 'rect(0,0,0,0)',
+	whiteSpace: 'nowrap',
+	border: 0,
 });
 
 const SectionDivider = styled(Divider)(({ theme }) => ({
@@ -101,10 +114,25 @@ export default function TicketDetailPage() {
 	});
 
 	const [agentId, setAgentId] = useState<string>('');
+	const [localStatus, setLocalStatus] = useState<string>('');
+	const [localCategory, setLocalCategory] = useState<string>('');
+
+	const invalidate = () => queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
+
 	const assignMutation = useMutation({
 		mutationFn: (newAgentId: string | null) =>
 			updateTicket(ticketId, { assignedAgentId: newAgentId }),
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] }),
+		onSuccess: invalidate,
+	});
+	const statusMutation = useMutation({
+		mutationFn: (status: string) =>
+			updateTicket(ticketId, { status: status as (typeof TicketStatus)[keyof typeof TicketStatus] }),
+		onSuccess: invalidate,
+	});
+	const categoryMutation = useMutation({
+		mutationFn: (category: string | null) =>
+			updateTicket(ticketId, { category: (category || null) as (typeof TicketCategory)[keyof typeof TicketCategory] | null }),
+		onSuccess: invalidate,
 	});
 
 	if (isNaN(ticketId)) {
@@ -131,14 +159,26 @@ export default function TicketDetailPage() {
 		);
 	}
 
-	const effectiveAgentId = assignMutation.isPending
-		? agentId
-		: (ticket.assignedAgent?.id ?? '');
+	const effectiveAgentId = assignMutation.isPending ? agentId : (ticket.assignedAgent?.id ?? '');
+	const effectiveStatus = statusMutation.isPending ? localStatus : ticket.status;
+	const effectiveCategory = categoryMutation.isPending ? localCategory : (ticket.category ?? '');
 
 	function handleAssignChange(e: SelectChangeEvent) {
 		const newId = e.target.value;
 		setAgentId(newId);
 		assignMutation.mutate(newId || null);
+	}
+
+	function handleStatusChange(e: SelectChangeEvent) {
+		const newStatus = e.target.value;
+		setLocalStatus(newStatus);
+		statusMutation.mutate(newStatus);
+	}
+
+	function handleCategoryChange(e: SelectChangeEvent) {
+		const newCategory = e.target.value;
+		setLocalCategory(newCategory);
+		categoryMutation.mutate(newCategory || null);
 	}
 
 	return (
@@ -164,7 +204,9 @@ export default function TicketDetailPage() {
 					<Grid size={{ xs: 12, sm: 6 }}>
 						<MetaLabel>Assigned to</MetaLabel>
 						<FormControl fullWidth size='small'>
+							<SrOnlyLabel id='assign-agent-label'>Assigned to</SrOnlyLabel>
 							<Select
+								labelId='assign-agent-label'
 								value={effectiveAgentId}
 								onChange={handleAssignChange}
 								displayEmpty
@@ -180,26 +222,46 @@ export default function TicketDetailPage() {
 						</FormControl>
 					</Grid>
 					<Grid size={{ xs: 12, sm: 6 }}>
-						<MetaLabel>Status</MetaLabel>
-						<Chip
-							label={ticket.status}
-							color={statusColor(ticket.status)}
-							size='small'
-						/>
-					</Grid>
-					<Grid size={{ xs: 12, sm: 6 }}>
-						<MetaLabel>Category</MetaLabel>
-						{ticket.category
-							? <Chip label={ticket.category} size='small' variant='outlined' />
-							: <MetaValue>—</MetaValue>}
-					</Grid>
-					<Grid size={{ xs: 12, sm: 6 }}>
 						<MetaLabel>Created</MetaLabel>
 						<MetaValue>{formatDate(ticket.createdAt)}</MetaValue>
 					</Grid>
 					<Grid size={{ xs: 12, sm: 6 }}>
+						<MetaLabel>Status</MetaLabel>
+						<FormControl fullWidth size='small'>
+							<SrOnlyLabel id='status-label'>Status</SrOnlyLabel>
+							<Select
+								labelId='status-label'
+								value={effectiveStatus}
+								onChange={handleStatusChange}
+								disabled={statusMutation.isPending}
+							>
+								{Object.values(TicketStatus).sort().map((s) => (
+									<MenuItem key={s} value={s}>{toTitleCase(s)}</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+					</Grid>
+					<Grid size={{ xs: 12, sm: 6 }}>
 						<MetaLabel>Updated</MetaLabel>
 						<MetaValue>{formatDate(ticket.updatedAt)}</MetaValue>
+					</Grid>
+					<Grid size={{ xs: 12, sm: 6 }}>
+						<MetaLabel>Category</MetaLabel>
+						<FormControl fullWidth size='small'>
+							<SrOnlyLabel id='category-label'>Category</SrOnlyLabel>
+							<Select
+								labelId='category-label'
+								value={effectiveCategory}
+								onChange={handleCategoryChange}
+								displayEmpty
+								disabled={categoryMutation.isPending}
+							>
+								<MenuItem value=''>None</MenuItem>
+								{Object.values(TicketCategory).sort().map((c) => (
+									<MenuItem key={c} value={c}>{toTitleCase(c)}</MenuItem>
+								))}
+							</Select>
+						</FormControl>
 					</Grid>
 				</MetaGridContainer>
 			</HeaderCard>

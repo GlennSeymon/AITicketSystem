@@ -6,6 +6,10 @@ export function statusColor(status: string): 'warning' | 'success' | 'default' {
 	return 'default';
 }
 
+export function toTitleCase(str: string) {
+	return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
 export function formatDate(iso: string) {
 	return new Date(iso).toLocaleDateString(undefined, {
 		year: 'numeric',
