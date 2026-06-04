@@ -120,8 +120,8 @@ export function CreateUserDialog({
 							name='role'
 							render={({ field }) => (
 								<FormControl fullWidth>
-									<InputLabel>Role</InputLabel>
-									<Select {...field} label='Role'>
+									<InputLabel id='role-label'>Role</InputLabel>
+									<Select {...field} labelId='role-label' id='role-select' label='Role'>
 										<MenuItem value={Role.AGENT}>Agent</MenuItem>
 										<MenuItem value={Role.ADMIN}>Admin</MenuItem>
 									</Select>
