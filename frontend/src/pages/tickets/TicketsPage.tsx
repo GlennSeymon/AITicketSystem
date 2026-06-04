@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTickets, type Ticket } from '../../services/tickets';
-import { TicketStatus } from '@repo/core';
+import { TicketStatus, TicketCategory } from '@repo/core';
 import {
 	Alert,
 	Button,
 	Chip,
 	Container,
+	FormControl,
+	InputLabel,
+	MenuItem,
+	Select,
+	type SelectChangeEvent,
 	Typography,
 	styled,
 } from '@mui/material';
@@ -27,7 +32,17 @@ const PageHeader = styled('div')({
 	display: 'flex',
 	justifyContent: 'space-between',
 	alignItems: 'center',
-	marginBottom: '1.5rem',
+	marginBottom: '1rem',
+});
+
+const FilterBar = styled('div')(({ theme }) => ({
+	display: 'flex',
+	gap: theme.spacing(2),
+	marginBottom: theme.spacing(2),
+}));
+
+const FilterFormControl = styled(FormControl)({
+	minWidth: 160,
 });
 
 function statusColor(status: string): 'warning' | 'success' | 'default' {
@@ -86,12 +101,16 @@ export default function TicketsPage() {
 	const [sortModel, setSortModel] = useState<GridSortModel>([
 		{ field: 'createdAt', sort: 'desc' },
 	]);
+	const [statusFilter, setStatusFilter] = useState('');
+	const [categoryFilter, setCategoryFilter] = useState('');
 
 	const { data: tickets = [], isPending, isError } = useQuery({
-		queryKey: ['tickets', sortModel],
+		queryKey: ['tickets', sortModel, statusFilter, categoryFilter],
 		queryFn: () => getTickets({
 			sortField: sortModel[0]?.field,
 			sortOrder: sortModel[0]?.sort ?? undefined,
+			status: statusFilter || undefined,
+			category: categoryFilter || undefined,
 		}),
 	});
 
@@ -117,6 +136,40 @@ export default function TicketsPage() {
 					Create Ticket
 				</Button>
 			</PageHeader>
+
+			<FilterBar>
+				<FilterFormControl size='small'>
+					<InputLabel id='status-filter-label'>Status</InputLabel>
+					<Select
+						labelId='status-filter-label'
+						id='status-filter'
+						value={statusFilter}
+						label='Status'
+						onChange={(e: SelectChangeEvent) => setStatusFilter(e.target.value)}
+					>
+						<MenuItem value=''>All</MenuItem>
+						{Object.values(TicketStatus).map((s) => (
+							<MenuItem key={s} value={s}>{s}</MenuItem>
+						))}
+					</Select>
+				</FilterFormControl>
+
+				<FilterFormControl size='small'>
+					<InputLabel id='category-filter-label'>Category</InputLabel>
+					<Select
+						labelId='category-filter-label'
+						id='category-filter'
+						value={categoryFilter}
+						label='Category'
+						onChange={(e: SelectChangeEvent) => setCategoryFilter(e.target.value)}
+					>
+						<MenuItem value=''>All</MenuItem>
+						{Object.values(TicketCategory).map((c) => (
+							<MenuItem key={c} value={c}>{c}</MenuItem>
+						))}
+					</Select>
+				</FilterFormControl>
+			</FilterBar>
 
 			<DataGrid
 				rows={tickets}

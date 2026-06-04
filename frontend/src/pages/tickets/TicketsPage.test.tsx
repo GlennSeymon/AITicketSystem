@@ -97,6 +97,53 @@ describe('TicketsPage', () => {
 		});
 	});
 
+	describe('filtering', () => {
+		it('renders the Status and Category filter dropdowns', async () => {
+			renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			expect(screen.getByLabelText('Status')).toBeInTheDocument();
+			expect(screen.getByLabelText('Category')).toBeInTheDocument();
+		});
+
+		it('refetches with status param when a status filter is selected', async () => {
+			const { user } = renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			await user.click(screen.getByLabelText('Status'));
+			await user.click(screen.getByRole('option', { name: 'OPEN' }));
+			await waitFor(() =>
+				expect(getTickets).toHaveBeenCalledWith(
+					expect.objectContaining({ status: 'OPEN' })
+				)
+			);
+		});
+
+		it('refetches with category param when a category filter is selected', async () => {
+			const { user } = renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			await user.click(screen.getByLabelText('Category'));
+			await user.click(screen.getByRole('option', { name: 'TECHNICAL' }));
+			await waitFor(() =>
+				expect(getTickets).toHaveBeenCalledWith(
+					expect.objectContaining({ category: 'TECHNICAL' })
+				)
+			);
+		});
+
+		it('clears the status filter when "All" is selected', async () => {
+			const { user } = renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			await user.click(screen.getByLabelText('Status'));
+			await user.click(screen.getByRole('option', { name: 'OPEN' }));
+			await user.click(screen.getByLabelText('Status'));
+			await user.click(screen.getByRole('option', { name: 'All' }));
+			await waitFor(() =>
+				expect(getTickets).toHaveBeenCalledWith(
+					expect.objectContaining({ status: undefined })
+				)
+			);
+		});
+	});
+
 	describe('table display', () => {
 		it('renders subject and from name/email for each ticket', async () => {
 			renderWithProviders(<TicketsPage />);
