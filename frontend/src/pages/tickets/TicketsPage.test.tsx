@@ -76,6 +76,27 @@ describe('TicketsPage', () => {
 		});
 	});
 
+	describe('server-side sorting', () => {
+		it('fetches with default sort (createdAt desc) on initial render', async () => {
+			renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			expect(getTickets).toHaveBeenCalledWith(
+				expect.objectContaining({ sortField: 'createdAt', sortOrder: 'desc' })
+			);
+		});
+
+		it('refetches with updated sort params when a column header is clicked', async () => {
+			const { user } = renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			await user.click(screen.getByRole('columnheader', { name: 'Subject' }));
+			await waitFor(() =>
+				expect(getTickets).toHaveBeenCalledWith(
+					expect.objectContaining({ sortField: 'subject', sortOrder: 'asc' })
+				)
+			);
+		});
+	});
+
 	describe('table display', () => {
 		it('renders subject and from name/email for each ticket', async () => {
 			renderWithProviders(<TicketsPage />);

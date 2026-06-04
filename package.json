@@ -14,5 +14,8 @@
   "devDependencies": {
     "@playwright/test": "^1.50.0",
     "@types/node": "^25.9.1"
+  },
+  "dependencies": {
+    "@mui/x-data-grid": "^9.3.0"
   }
 }
