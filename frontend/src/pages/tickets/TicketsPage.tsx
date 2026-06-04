@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTickets, type Ticket } from '../../services/tickets';
-import { TicketStatus, TicketCategory } from '@repo/core';
+import { TicketStatus, TicketCategory, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '@repo/core';
 import {
 	Alert,
 	Button,
@@ -18,6 +18,7 @@ import {
 import {
 	DataGrid,
 	type GridColDef,
+	type GridPaginationModel,
 	type GridSortModel,
 	type GridRenderCellParams,
 } from '@mui/x-data-grid';
@@ -103,16 +104,47 @@ export default function TicketsPage() {
 	]);
 	const [statusFilter, setStatusFilter] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState('');
-
-	const { data: tickets = [], isPending, isError } = useQuery({
-		queryKey: ['tickets', sortModel, statusFilter, categoryFilter],
-		queryFn: () => getTickets({
-			sortField: sortModel[0]?.field,
-			sortOrder: sortModel[0]?.sort ?? undefined,
-			status: statusFilter || undefined,
-			category: categoryFilter || undefined,
-		}),
+	const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+		page: 0,
+		pageSize: DEFAULT_PAGE_SIZE,
 	});
+
+	function handleSortModelChange(model: GridSortModel) {
+		setSortModel(model);
+		setPaginationModel((prev) => ({ ...prev, page: 0 }));
+	}
+
+	function handleStatusChange(e: SelectChangeEvent) {
+		setStatusFilter(e.target.value);
+		setPaginationModel((prev) => ({ ...prev, page: 0 }));
+	}
+
+	function handleCategoryChange(e: SelectChangeEvent) {
+		setCategoryFilter(e.target.value);
+		setPaginationModel((prev) => ({ ...prev, page: 0 }));
+	}
+
+	const { data, isPending, isError } = useQuery({
+		queryKey: [
+			'tickets',
+			sortModel,
+			statusFilter,
+			categoryFilter,
+			paginationModel,
+		],
+		queryFn: () =>
+			getTickets({
+				sortField: sortModel[0]?.field,
+				sortOrder: sortModel[0]?.sort ?? undefined,
+				status: statusFilter || undefined,
+				category: categoryFilter || undefined,
+				page: paginationModel.page,
+				pageSize: paginationModel.pageSize,
+			}),
+	});
+
+	const tickets = data?.data ?? [];
+	const rowCount = data?.total ?? 0;
 
 	if (isError) {
 		return (
@@ -145,11 +177,13 @@ export default function TicketsPage() {
 						id='status-filter'
 						value={statusFilter}
 						label='Status'
-						onChange={(e: SelectChangeEvent) => setStatusFilter(e.target.value)}
+						onChange={handleStatusChange}
 					>
 						<MenuItem value=''>All</MenuItem>
 						{Object.values(TicketStatus).map((s) => (
-							<MenuItem key={s} value={s}>{s}</MenuItem>
+							<MenuItem key={s} value={s}>
+								{s}
+							</MenuItem>
 						))}
 					</Select>
 				</FilterFormControl>
@@ -161,11 +195,13 @@ export default function TicketsPage() {
 						id='category-filter'
 						value={categoryFilter}
 						label='Category'
-						onChange={(e: SelectChangeEvent) => setCategoryFilter(e.target.value)}
+						onChange={handleCategoryChange}
 					>
 						<MenuItem value=''>All</MenuItem>
 						{Object.values(TicketCategory).map((c) => (
-							<MenuItem key={c} value={c}>{c}</MenuItem>
+							<MenuItem key={c} value={c}>
+								{c}
+							</MenuItem>
 						))}
 					</Select>
 				</FilterFormControl>
@@ -176,10 +212,14 @@ export default function TicketsPage() {
 				columns={columns}
 				sortingMode='server'
 				sortModel={sortModel}
-				onSortModelChange={setSortModel}
+				onSortModelChange={handleSortModelChange}
+				paginationMode='server'
+				rowCount={rowCount}
+				paginationModel={paginationModel}
+				onPaginationModelChange={setPaginationModel}
+				pageSizeOptions={PAGE_SIZE_OPTIONS}
 				loading={isPending}
 				autoHeight
-				hideFooter
 				disableRowSelectionOnClick
 				disableColumnFilter
 				localeText={{ noRowsLabel: 'No tickets yet.' }}

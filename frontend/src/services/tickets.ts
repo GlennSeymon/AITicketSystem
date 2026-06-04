@@ -26,8 +26,10 @@ export async function getTickets(params?: {
 	category?: string;
 	sortField?: string;
 	sortOrder?: 'asc' | 'desc';
-}): Promise<Ticket[]> {
-	const { data } = await api.get<Ticket[]>('/api/tickets', { params });
+	page?: number;
+	pageSize?: number;
+}): Promise<{ data: Ticket[]; total: number }> {
+	const { data } = await api.get<{ data: Ticket[]; total: number }>('/api/tickets', { params });
 	return data;
 }
 

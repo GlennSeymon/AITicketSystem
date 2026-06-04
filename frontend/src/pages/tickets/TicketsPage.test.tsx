@@ -41,9 +41,11 @@ const newTicket: Ticket = {
 	updatedAt: '2026-06-04T00:00:00.000Z',
 };
 
+const mockResponse = { data: mockTickets, total: 2 };
+
 describe('TicketsPage', () => {
 	beforeEach(() => {
-		vi.mocked(getTickets).mockResolvedValue(mockTickets);
+		vi.mocked(getTickets).mockResolvedValue(mockResponse);
 		vi.mocked(createTicket).mockResolvedValue(newTicket);
 	});
 
@@ -70,9 +72,19 @@ describe('TicketsPage', () => {
 
 	describe('empty state', () => {
 		it('shows "No tickets yet." when there are no tickets', async () => {
-			vi.mocked(getTickets).mockResolvedValue([]);
+			vi.mocked(getTickets).mockResolvedValue({ data: [], total: 0 });
 			renderWithProviders(<TicketsPage />);
 			expect(await screen.findByText('No tickets yet.')).toBeInTheDocument();
+		});
+	});
+
+	describe('server-side pagination', () => {
+		it('fetches with default page 0 and pageSize 10 on initial render', async () => {
+			renderWithProviders(<TicketsPage />);
+			await screen.findByText('Cannot access module 3');
+			expect(getTickets).toHaveBeenCalledWith(
+				expect.objectContaining({ page: 0, pageSize: 10 })
+			);
 		});
 	});
 
@@ -205,8 +217,8 @@ describe('TicketsPage', () => {
 
 		it('calls createTicket with form data and closes the dialog on success', async () => {
 			vi.mocked(getTickets)
-				.mockResolvedValueOnce(mockTickets)
-				.mockResolvedValueOnce([...mockTickets, newTicket]);
+				.mockResolvedValueOnce(mockResponse)
+				.mockResolvedValueOnce({ data: [...mockTickets, newTicket], total: 3 });
 			const { user } = renderWithProviders(<TicketsPage />);
 			await screen.findByText('Cannot access module 3');
 			await user.click(screen.getByRole('button', { name: /create ticket/i }));

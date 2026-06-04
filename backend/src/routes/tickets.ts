@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createTicketSchema, updateTicketSchema } from '@repo/core';
+import { createTicketSchema, updateTicketSchema, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '@repo/core';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import {
@@ -32,10 +32,12 @@ const SORTABLE_FIELDS = [
 ] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
+
 router.get(
 	'/',
 	asyncHandler(async (req, res) => {
-		const { status, category, sortField, sortOrder } = req.query;
+		const { status, category, sortField, sortOrder, page, pageSize } =
+			req.query;
 
 		const validSort =
 			typeof sortField === 'string' &&
@@ -46,16 +48,30 @@ router.get(
 			? { [sortField as SortableField]: sortOrder as 'asc' | 'desc' }
 			: { createdAt: 'desc' as const };
 
-		const tickets = await prisma.ticket.findMany({
-			where: {
-				...(status && { status: status as TicketStatus }),
-				...(category && { category: category as TicketCategory }),
-			},
-			select: TICKET_SELECT,
-			orderBy,
-		});
+		const parsedPage = Math.max(0, parseInt(page as string, 10) || 0);
+		const parsedPageSize = PAGE_SIZE_OPTIONS.includes(
+			parseInt(pageSize as string, 10) as PageSize,
+		)
+			? parseInt(pageSize as string, 10)
+			: DEFAULT_PAGE_SIZE;
 
-		res.json(tickets);
+		const where = {
+			...(status && { status: status as TicketStatus }),
+			...(category && { category: category as TicketCategory }),
+		};
+
+		const [total, tickets] = await Promise.all([
+			prisma.ticket.count({ where }),
+			prisma.ticket.findMany({
+				where,
+				select: TICKET_SELECT,
+				orderBy,
+				skip: parsedPage * parsedPageSize,
+				take: parsedPageSize,
+			}),
+		]);
+
+		res.json({ data: tickets, total });
 	}),
 );
 
