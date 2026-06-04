@@ -130,6 +130,13 @@ Component tests use **Vitest** + **React Testing Library** and live alongside th
 - Use `renderWithProviders(<MyPage />)` and destructure `user` for interactions
 - Prefer `findBy*` (async) when waiting for data to load; use `within(dialog)` to scope queries to open dialogs
 - MUI-specific: `Switch` has `role="switch"` not `role="checkbox"`; query Chips by their label text
+- MUI `Select` requires explicit `id` and `labelId` on the `Select`/`InputLabel` pair for `getByLabel` to resolve it in tests
+- Add `noValidate` to every `<form>` so react-hook-form/Zod owns all validation — without it, browsers block submit on `type="email"` inputs before react-hook-form fires
+- The `ResizeObserver` stub in `setup.ts` must be a `class` (not an arrow function) so MUI `TextareaAutosize` can call `new ResizeObserver(...)` without throwing
+
+**Component vs E2E split:**
+- **Component tests** — anything testable in isolation: rendering states (loading, error, empty), table/list display, dialog open/close, form validation, mutation calls, cancel behaviour
+- **E2E tests** — only what requires the full stack: auth redirects, role-based routing, cross-page navigation, full create-then-list flows that depend on real network + DB
 
 **Key library IDs for context7:**
 - React Testing Library: `/testing-library/testing-library-docs`
