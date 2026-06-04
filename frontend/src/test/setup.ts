@@ -19,9 +19,9 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 });
 
-// MUI uses ResizeObserver for layout calculations
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// MUI uses ResizeObserver for layout calculations (TextareaAutosize calls `new ResizeObserver(...)`)
+global.ResizeObserver = class ResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+};
