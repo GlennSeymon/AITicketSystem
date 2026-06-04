@@ -7,7 +7,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'TestAdmin123!';
 const AGENT_EMAIL = process.env.AGENT_EMAIL ?? 'agent@e2e.test';
 const AGENT_PASSWORD = process.env.AGENT_PASSWORD ?? 'TestAgent123!';
 
-// Clear all auth-related tables in dependency order
+// Clear all tables in dependency order (messages cascade from tickets)
+await prisma.ticket.deleteMany();
 await prisma.session.deleteMany();
 await prisma.verification.deleteMany();
 await prisma.account.deleteMany();
