@@ -21,7 +21,12 @@ export type Message = {
 
 export type TicketDetail = Ticket & { body: string; messages: Message[] };
 
-export async function getTickets(params?: { status?: string; category?: string }): Promise<Ticket[]> {
+export async function getTickets(params?: {
+	status?: string;
+	category?: string;
+	sortField?: string;
+	sortOrder?: 'asc' | 'desc';
+}): Promise<Ticket[]> {
 	const { data } = await api.get<Ticket[]>('/api/tickets', { params });
 	return data;
 }

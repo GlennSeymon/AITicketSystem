@@ -7,17 +7,15 @@ import {
 	Button,
 	Chip,
 	Container,
-	Paper,
-	Skeleton,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
 	Typography,
 	styled,
 } from '@mui/material';
+import {
+	DataGrid,
+	type GridColDef,
+	type GridSortModel,
+	type GridRenderCellParams,
+} from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateTicketDialog } from './CreateTicketDialog';
 
@@ -46,46 +44,56 @@ function formatDate(iso: string) {
 	});
 }
 
+const columns: GridColDef<Ticket>[] = [
+	{
+		field: 'subject',
+		headerName: 'Subject',
+		flex: 2,
+		minWidth: 200,
+	},
+	{
+		field: 'fromName',
+		headerName: 'From',
+		flex: 1.5,
+		minWidth: 180,
+		renderCell: ({ row }: GridRenderCellParams<Ticket>) =>
+			`${row.fromName} <${row.fromEmail}>`,
+	},
+	{
+		field: 'status',
+		headerName: 'Status',
+		width: 120,
+		renderCell: ({ value }: GridRenderCellParams<Ticket>) => (
+			<Chip label={value} color={statusColor(value)} size='small' />
+		),
+	},
+	{
+		field: 'category',
+		headerName: 'Category',
+		width: 160,
+		valueFormatter: (value: string | null) => value ?? '—',
+	},
+	{
+		field: 'createdAt',
+		headerName: 'Date',
+		width: 140,
+		valueFormatter: (value: string) => formatDate(value),
+	},
+];
+
 export default function TicketsPage() {
 	const [createOpen, setCreateOpen] = useState(false);
+	const [sortModel, setSortModel] = useState<GridSortModel>([
+		{ field: 'createdAt', sort: 'desc' },
+	]);
 
-	const { data: tickets, isPending, isError } = useQuery({
-		queryKey: ['tickets'],
-		queryFn: () => getTickets(),
+	const { data: tickets = [], isPending, isError } = useQuery({
+		queryKey: ['tickets', sortModel],
+		queryFn: () => getTickets({
+			sortField: sortModel[0]?.field,
+			sortOrder: sortModel[0]?.sort ?? undefined,
+		}),
 	});
-
-	if (isPending) {
-		return (
-			<PageContainer>
-				<PageHeader>
-					<Skeleton variant='text' width={160} height={40} />
-					<Skeleton variant='rounded' width={140} height={36} />
-				</PageHeader>
-				<TableContainer component={Paper}>
-					<Table>
-						<TableHead>
-							<TableRow>
-								{['Subject', 'From', 'Status', 'Category', 'Date'].map((col) => (
-									<TableCell key={col}>{col}</TableCell>
-								))}
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							{Array.from({ length: 5 }).map((_, i) => (
-								<TableRow key={i}>
-									{Array.from({ length: 5 }).map((_, j) => (
-										<TableCell key={j}>
-											<Skeleton />
-										</TableCell>
-									))}
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</TableContainer>
-			</PageContainer>
-		);
-	}
 
 	if (isError) {
 		return (
@@ -110,40 +118,19 @@ export default function TicketsPage() {
 				</Button>
 			</PageHeader>
 
-			{tickets.length === 0 ? (
-				<Typography color='text.secondary'>No tickets yet.</Typography>
-			) : (
-				<TableContainer component={Paper}>
-					<Table>
-						<TableHead>
-							<TableRow>
-								<TableCell>Subject</TableCell>
-								<TableCell>From</TableCell>
-								<TableCell>Status</TableCell>
-								<TableCell>Category</TableCell>
-								<TableCell>Date</TableCell>
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							{tickets.map((ticket: Ticket) => (
-								<TableRow key={ticket.id} hover>
-									<TableCell>{ticket.subject}</TableCell>
-									<TableCell>{ticket.fromName} &lt;{ticket.fromEmail}&gt;</TableCell>
-									<TableCell>
-										<Chip
-											label={ticket.status}
-											color={statusColor(ticket.status)}
-											size='small'
-										/>
-									</TableCell>
-									<TableCell>{ticket.category ?? '—'}</TableCell>
-									<TableCell>{formatDate(ticket.createdAt)}</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</TableContainer>
-			)}
+			<DataGrid
+				rows={tickets}
+				columns={columns}
+				sortingMode='server'
+				sortModel={sortModel}
+				onSortModelChange={setSortModel}
+				loading={isPending}
+				autoHeight
+				hideFooter
+				disableRowSelectionOnClick
+				disableColumnFilter
+				localeText={{ noRowsLabel: 'No tickets yet.' }}
+			/>
 
 			<CreateTicketDialog
 				open={createOpen}

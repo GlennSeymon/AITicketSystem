@@ -48,13 +48,15 @@ describe('TicketsPage', () => {
 	});
 
 	describe('loading state', () => {
-		it('shows skeleton table with column headers while data is loading', () => {
+		it('shows column headers and the create button while data is loading', () => {
 			vi.mocked(getTickets).mockImplementation(() => new Promise(() => {}));
 			renderWithProviders(<TicketsPage />);
+			// DataGrid renders column headers immediately, even while loading
 			expect(screen.getByRole('columnheader', { name: 'Subject' })).toBeInTheDocument();
 			expect(screen.getByRole('columnheader', { name: 'From' })).toBeInTheDocument();
 			expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
-			expect(screen.queryByText('Create Ticket')).not.toBeInTheDocument();
+			// Page header (with Create Ticket button) is always visible
+			expect(screen.getByRole('button', { name: /create ticket/i })).toBeInTheDocument();
 		});
 	});
 
@@ -71,7 +73,6 @@ describe('TicketsPage', () => {
 			vi.mocked(getTickets).mockResolvedValue([]);
 			renderWithProviders(<TicketsPage />);
 			expect(await screen.findByText('No tickets yet.')).toBeInTheDocument();
-			expect(screen.queryByRole('table')).not.toBeInTheDocument();
 		});
 	});
 

@@ -17,8 +17,20 @@ const TICKET_SELECT = {
 	updatedAt: true,
 } as const;
 
+const SORTABLE_FIELDS = ['subject', 'fromName', 'fromEmail', 'status', 'category', 'createdAt', 'updatedAt'] as const;
+type SortableField = typeof SORTABLE_FIELDS[number];
+
 router.get('/', asyncHandler(async (req, res) => {
-	const { status, category } = req.query;
+	const { status, category, sortField, sortOrder } = req.query;
+
+	const validSort =
+		typeof sortField === 'string' &&
+		(SORTABLE_FIELDS as readonly string[]).includes(sortField) &&
+		(sortOrder === 'asc' || sortOrder === 'desc');
+
+	const orderBy = validSort
+		? { [sortField as SortableField]: sortOrder as 'asc' | 'desc' }
+		: { createdAt: 'desc' as const };
 
 	const tickets = await prisma.ticket.findMany({
 		where: {
@@ -26,7 +38,7 @@ router.get('/', asyncHandler(async (req, res) => {
 			...(category && { category: category as TicketCategory }),
 		},
 		select: TICKET_SELECT,
-		orderBy: { createdAt: 'desc' },
+		orderBy,
 	});
 
 	res.json(tickets);
