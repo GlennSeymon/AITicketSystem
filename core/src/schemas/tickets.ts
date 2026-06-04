@@ -3,6 +3,9 @@ import { z } from 'zod';
 export const ticketStatusEnum = z.enum(['OPEN', 'RESOLVED', 'CLOSED']);
 export const ticketCategoryEnum = z.enum(['GENERAL', 'TECHNICAL', 'REFUND', 'UNCATEGORISED']);
 
+export const TicketStatus = ticketStatusEnum.enum;
+export const TicketCategory = ticketCategoryEnum.enum;
+
 export const createTicketSchema = z.object({
 	subject: z.string().trim().min(1, 'Subject is required'),
 	fromEmail: z.string().email('Invalid email'),

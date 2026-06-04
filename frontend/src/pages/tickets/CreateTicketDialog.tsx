@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createTicketSchema, type CreateTicketInput } from '@repo/core';
+import { createTicketSchema, type CreateTicketInput, TicketCategory } from '@repo/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTicket } from '../../services/tickets';
 import {
@@ -143,10 +143,10 @@ export function CreateTicketDialog({
 										label='Category'
 									>
 										<MenuItem value=''><em>None</em></MenuItem>
-										<MenuItem value='GENERAL'>General</MenuItem>
-										<MenuItem value='TECHNICAL'>Technical</MenuItem>
-										<MenuItem value='REFUND'>Refund</MenuItem>
-										<MenuItem value='UNCATEGORISED'>Uncategorised</MenuItem>
+										<MenuItem value={TicketCategory.GENERAL}>General</MenuItem>
+										<MenuItem value={TicketCategory.TECHNICAL}>Technical</MenuItem>
+										<MenuItem value={TicketCategory.REFUND}>Refund</MenuItem>
+										<MenuItem value={TicketCategory.UNCATEGORISED}>Uncategorised</MenuItem>
 									</Select>
 								</FormControl>
 							)}

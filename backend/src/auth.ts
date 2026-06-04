@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from './prisma';
+import { Role } from './generated/prisma/client';
 
 const trustedOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',');
 if (!trustedOrigins?.length && process.env.NODE_ENV === 'production') {
@@ -16,7 +17,7 @@ export const auth = betterAuth({
 			role: {
 				type: 'string',
 				required: true,
-				defaultValue: 'AGENT',
+				defaultValue: Role.AGENT,
 				input: false,
 			},
 			isActive: {

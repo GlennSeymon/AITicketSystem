@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTickets, type Ticket } from '../../services/tickets';
+import { TicketStatus } from '@repo/core';
 import {
 	Alert,
 	Button,
@@ -32,8 +33,8 @@ const PageHeader = styled('div')({
 });
 
 function statusColor(status: string): 'warning' | 'success' | 'default' {
-	if (status === 'OPEN') return 'warning';
-	if (status === 'RESOLVED') return 'success';
+	if (status === TicketStatus.OPEN) return 'warning';
+	if (status === TicketStatus.RESOLVED) return 'success';
 	return 'default';
 }
 

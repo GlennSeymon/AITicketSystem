@@ -1,6 +1,7 @@
 import { AppBar, Button, Toolbar, Typography, styled } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { authClient } from '../lib/authClient';
+import { Role } from '@repo/core';
 
 const StyledAppBar = styled(AppBar)({
 	position: 'static',
@@ -39,7 +40,7 @@ export default function NavBar() {
 				<NavLink component={Link} to='/tickets'>
 					Tickets
 				</NavLink>
-				{data?.user.role === 'ADMIN' && (
+				{data?.user.role === Role.ADMIN && (
 					<NavLink component={Link} to='/users'>
 						Users
 					</NavLink>

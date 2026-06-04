@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUsers, deleteUser, type User } from '../../services/users';
+import { Role } from '@repo/core';
 import {
 	Alert,
 	Button,
@@ -149,8 +150,8 @@ export default function UsersPage() {
 								<TableCell>{user.email}</TableCell>
 								<TableCell>
 									<Chip
-										label={user.role === 'ADMIN' ? 'Admin' : 'Agent'}
-										color={user.role === 'ADMIN' ? 'primary' : 'default'}
+										label={user.role === Role.ADMIN ? 'Admin' : 'Agent'}
+										color={user.role === Role.ADMIN ? 'primary' : 'default'}
 										size='small'
 									/>
 								</TableCell>

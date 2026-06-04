@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updateUserSchema, type UpdateUserInput } from '@repo/core';
+import { updateUserSchema, type UpdateUserInput, Role } from '@repo/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateUser, type User } from '../../services/users';
 import {
@@ -113,8 +113,8 @@ export function EditUserDialog({
 								<FormControl fullWidth>
 									<InputLabel>Role</InputLabel>
 									<Select {...field} label='Role'>
-										<MenuItem value='AGENT'>Agent</MenuItem>
-										<MenuItem value='ADMIN'>Admin</MenuItem>
+										<MenuItem value={Role.AGENT}>Agent</MenuItem>
+										<MenuItem value={Role.ADMIN}>Admin</MenuItem>
 									</Select>
 								</FormControl>
 							)}

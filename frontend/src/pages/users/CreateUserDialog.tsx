@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createUserSchema, type CreateUserInput } from '@repo/core';
+import { createUserSchema, type CreateUserInput, Role } from '@repo/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createUser } from '../../services/users';
 import {
@@ -44,7 +44,7 @@ export function CreateUserDialog({
 		formState: { errors },
 	} = useForm<CreateUserInput>({
 		resolver: zodResolver(createUserSchema),
-		defaultValues: { name: '', email: '', password: '', role: 'AGENT' },
+		defaultValues: { name: '', email: '', password: '', role: Role.AGENT },
 	});
 
 	const mutation = useMutation({
@@ -122,8 +122,8 @@ export function CreateUserDialog({
 								<FormControl fullWidth>
 									<InputLabel>Role</InputLabel>
 									<Select {...field} label='Role'>
-										<MenuItem value='AGENT'>Agent</MenuItem>
-										<MenuItem value='ADMIN'>Admin</MenuItem>
+										<MenuItem value={Role.AGENT}>Agent</MenuItem>
+										<MenuItem value={Role.ADMIN}>Admin</MenuItem>
 									</Select>
 								</FormControl>
 							)}

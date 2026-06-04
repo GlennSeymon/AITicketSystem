@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import { requireWebhookSecret } from '../require-webhook-secret';
-import { MessageDirection, TicketCategory } from '../generated/prisma/client';
+import { MessageDirection, TicketCategory, TicketStatus } from '../generated/prisma/client';
 
 const router = Router();
 
@@ -37,7 +37,7 @@ router.post('/inbound-email', requireWebhookSecret, asyncHandler(async (req, res
 	const existing = await prisma.ticket.findFirst({
 		where: {
 			fromEmail,
-			status: 'OPEN',
+			status: TicketStatus.OPEN,
 			subject: { equals: normalizedSubject, mode: 'insensitive' },
 		},
 	});

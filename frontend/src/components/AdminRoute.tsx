@@ -1,6 +1,7 @@
 import { CircularProgress, styled } from '@mui/material';
 import { Navigate, Outlet } from 'react-router-dom';
 import { authClient } from '../lib/authClient';
+import { Role } from '@repo/core';
 
 const CenteredBox = styled('div')({
 	display: 'flex',
@@ -20,7 +21,7 @@ export default function AdminRoute() {
 		);
 	}
 
-	if (!data || data.user.role !== 'ADMIN') {
+	if (!data || data.user.role !== Role.ADMIN) {
 		return <Navigate to='/' replace />;
 	}
 
