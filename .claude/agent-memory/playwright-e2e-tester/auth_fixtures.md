@@ -1,6 +1,6 @@
 ---
 name: auth_fixtures
-description: Cookie-injection auth fixtures — adminPage/agentPage skip UI login by injecting pre-seeded session cookies
+description: Auth fixtures — adminPage/agentPage sign in via Better Auth API endpoint before yielding the page
 metadata:
   type: project
 ---
@@ -17,40 +17,27 @@ Extends `@playwright/test` base with four fixtures:
 |--------------------|-------------|-------------|
 | `adminCredentials` | Credentials | `{ email, password }` from env/defaults |
 | `agentCredentials` | Credentials | `{ email, password }` from env/defaults |
-| `adminPage`        | Page        | Page with `better-auth.session_token=e2e-admin-session-token` injected |
-| `agentPage`        | Page        | Page with `better-auth.session_token=e2e-agent-session-token` injected |
+| `adminPage`        | Page        | Page pre-authenticated via real sign-in API call |
+| `agentPage`        | Page        | Page pre-authenticated via real sign-in API call |
 
-## Cookie spec
+## How authentication works
 
-```typescript
-{
-  name: 'better-auth.session_token',
-  value: '<token>',
-  domain: 'localhost',
-  path: '/',
-  httpOnly: true,
-  secure: false,
-  sameSite: 'Lax',
-  expires: new Date('2099-12-31').getTime() / 1000,
-}
-```
+`adminPage`/`agentPage` call `page.request.post('/api/auth/sign-in/email', { data: { email, password } })` before yielding the page. `page.request` shares the cookie jar with the `page` object, so the session cookie set by Better Auth is automatically available for all subsequent `page.goto()` calls.
 
-- Cookie is injected via `page.context().addCookies(...)` before the page is yielded to the test.
-- The cookie must be injected BEFORE `page.goto(...)` — the session is validated on the first authenticated API call.
-- `secure: false` is correct for localhost (no HTTPS in dev/test).
+This uses the real sign-in endpoint (not raw cookie injection) because Better Auth may sign/transform tokens internally. The API call guarantees the session cookie is always valid.
 
 ## Usage in tests
 
 ```typescript
 import { test, expect } from '../fixtures/auth.fixtures';
 
-// Cookie injection — no UI login needed
+// Pre-authenticated — no UI login needed
 test('example', async ({ adminPage }) => {
   await adminPage.goto('/');
   // already authenticated
 });
 
-// UI login — use credentials fixture
+// UI login test — use credentials fixture
 test('login form', async ({ page, adminCredentials }) => {
   await page.goto('/login');
   await page.getByLabel('Email').fill(adminCredentials.email);
@@ -58,4 +45,28 @@ test('login form', async ({ page, adminCredentials }) => {
 });
 ```
 
-**Why:** Injecting cookies directly is faster and more reliable than driving the login UI for every test. Only login.spec.ts tests the UI login flow — all other specs use `adminPage`/`agentPage`.
+## Authenticating in pure API tests (no page)
+
+For API-level tests using Playwright's `request` fixture, replicate the sign-in
+call manually, then extract the `Set-Cookie` header to forward as `Cookie:` in
+subsequent requests:
+
+```typescript
+const signInRes = await request.post('http://localhost:3002/api/auth/sign-in/email', {
+  data: { email, password },
+});
+const rawCookie = signInRes.headers()['set-cookie'];
+const sessionCookie = rawCookie
+  .split('\n')
+  .map((c) => c.split(';')[0].trim())
+  .filter(Boolean)
+  .join('; ');
+
+// Use in subsequent requests:
+await request.patch(`http://localhost:3002/api/tickets/${id}`, {
+  headers: { Cookie: sessionCookie },
+  data: { status: 'CLOSED' },
+});
+```
+
+**Why API login instead of raw cookie injection:** Better Auth may sign or transform the session token internally. Using the real sign-in endpoint guarantees the cookie is correct regardless of internal handling.
