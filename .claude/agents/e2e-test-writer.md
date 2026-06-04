@@ -33,8 +33,8 @@ Test accounts (seeded into `tickets_test` by `e2e/global-setup.ts` before every 
 
 **How tests start:** `bun run test:e2e` from the repo root. Playwright's `globalSetup` runs `prisma migrate deploy` then `backend/src/seed.test.ts` against the test DB, then starts both servers fresh (`reuseExistingServer: false`). Dev servers can remain running.
 
-**Test seed** (`backend/src/seed.test.ts`) clears and re-seeds four tables on every run:
-- `session → verification → account → user` (FK-safe delete order)
+**Test seed** (`backend/src/seed.test.ts`) clears and re-seeds on every run (FK-safe order):
+- Tickets deleted first (messages cascade), then `session → verification → account → user`
 
 **Authenticating in fixtures (preferred over UI login):** use `page.request.post('/api/auth/sign-in/email', ...)` to sign in via the API. Playwright's `page.request` shares the cookie jar with `page`, so the resulting session cookie is available for all subsequent `page.goto()` calls. This is faster than UI login and more reliable than cookie injection (which depends on Better Auth's internal token format).
 
