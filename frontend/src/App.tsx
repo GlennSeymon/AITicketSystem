@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import UsersPage from './pages/users/UsersPage';
 import TicketsPage from './pages/tickets/TicketsPage';
+import TicketDetailPage from './pages/tickets/TicketDetailPage';
 import theme from './theme';
 
 function AuthLayout() {
@@ -30,6 +31,7 @@ export default function App() {
 						<Route element={<AuthLayout />}>
 							<Route index element={<HomePage />} />
 							<Route path='/tickets' element={<TicketsPage />} />
+							<Route path='/tickets/:id' element={<TicketDetailPage />} />
 							<Route element={<AdminRoute />}>
 								<Route path='/users' element={<UsersPage />} />
 							</Route>

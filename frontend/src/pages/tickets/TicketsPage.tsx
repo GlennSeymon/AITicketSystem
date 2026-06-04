@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getTickets, type Ticket } from '../../services/tickets';
 import { TicketStatus, TicketCategory, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '@repo/core';
@@ -24,6 +25,7 @@ import {
 } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import { CreateTicketDialog } from './CreateTicketDialog';
+import { formatDate, statusColor } from '../../lib/format';
 
 const PageContainer = styled(Container)(({ theme }) => ({
 	paddingTop: theme.spacing(4),
@@ -46,19 +48,13 @@ const FilterFormControl = styled(FormControl)({
 	minWidth: 160,
 });
 
-function statusColor(status: string): 'warning' | 'success' | 'default' {
-	if (status === TicketStatus.OPEN) return 'warning';
-	if (status === TicketStatus.RESOLVED) return 'success';
-	return 'default';
-}
-
-function formatDate(iso: string) {
-	return new Date(iso).toLocaleDateString(undefined, {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-	});
-}
+const SubjectLink = styled(Link)(({ theme }) => ({
+	color: theme.palette.primary.main,
+	textDecoration: 'none',
+	'&:hover': {
+		textDecoration: 'underline',
+	},
+}));
 
 const columns: GridColDef<Ticket>[] = [
 	{
@@ -66,6 +62,9 @@ const columns: GridColDef<Ticket>[] = [
 		headerName: 'Subject',
 		flex: 2,
 		minWidth: 200,
+		renderCell: ({ row }: GridRenderCellParams<Ticket>) => (
+			<SubjectLink to={`/tickets/${row.id}`}>{row.subject}</SubjectLink>
+		),
 	},
 	{
 		field: 'fromName',
