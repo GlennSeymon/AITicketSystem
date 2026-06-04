@@ -118,7 +118,10 @@ router.get(
 
 		const ticket = await prisma.ticket.findUnique({
 			where: { id },
-			include: { messages: { orderBy: { createdAt: 'asc' } } },
+			include: {
+					messages: { orderBy: { createdAt: 'asc' } },
+					assignedAgent: { select: { id: true, name: true, email: true } },
+				},
 		});
 
 		if (!ticket) {
@@ -145,16 +148,28 @@ router.patch(
 			return;
 		}
 
-		const { status, category } = parsed.data;
+		const { status, category, assignedAgentId } = parsed.data;
 
-		const ticket = await prisma.ticket.update({
-			where: { id },
-			data: {
-				...(status !== undefined && { status: status as TicketStatus }),
-				...(category !== undefined && { category: category as TicketCategory }),
-			},
-			select: TICKET_SELECT,
-		});
+			if (assignedAgentId) {
+				const agent = await prisma.user.findUnique({
+					where: { id: assignedAgentId },
+					select: { id: true },
+				});
+				if (!agent) {
+					res.status(400).json({ error: 'Agent not found' });
+					return;
+				}
+			}
+
+			const ticket = await prisma.ticket.update({
+				where: { id },
+				data: {
+					...(status !== undefined && { status: status as TicketStatus }),
+					...(category !== undefined && { category: category as TicketCategory }),
+					...(assignedAgentId !== undefined && { assignedAgentId }),
+				},
+				select: TICKET_SELECT,
+			});
 
 		res.json(ticket);
 	}),

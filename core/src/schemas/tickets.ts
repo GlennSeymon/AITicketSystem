@@ -17,6 +17,7 @@ export const createTicketSchema = z.object({
 export const updateTicketSchema = z.object({
 	status: ticketStatusEnum.optional(),
 	category: ticketCategoryEnum.optional(),
+	assignedAgentId: z.string().nullable().optional(),
 });
 
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;

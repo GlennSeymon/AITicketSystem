@@ -7,6 +7,7 @@ import { requireAuth } from './require-auth';
 import { requireAdmin } from './require-admin';
 import usersRouter from './routes/users';
 import ticketsRouter from './routes/tickets';
+import agentsRouter from './routes/agents';
 import webhooksRouter from './routes/webhooks';
 
 const app = express();
@@ -36,6 +37,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 });
 
 app.use('/api/users', requireAuth, requireAdmin, usersRouter);
+app.use('/api/agents', requireAuth, agentsRouter);
 app.use('/api/tickets', requireAuth, ticketsRouter);
 app.use('/api/webhooks', webhooksRouter);
 

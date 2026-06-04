@@ -123,14 +123,16 @@ Component tests use **Vitest** + **React Testing Library** and live alongside th
 **Infrastructure files:**
 - `frontend/vite.config.ts` — Vitest config (`environment: 'jsdom'`, `clearMocks: true`, `setupFiles`)
 - `frontend/src/test/setup.ts` — imports `@testing-library/jest-dom` matchers, stubs `window.matchMedia` / `ResizeObserver` for MUI, and calls `afterEach(cleanup)` (required — RTL v16 does not auto-cleanup without Vitest globals enabled)
-- `frontend/src/test/renderWithProviders.tsx` — wrap any component with `QueryClientProvider`; returns `{ user, ...renderResult }` where `user` is a pre-configured `userEvent` instance
+- `frontend/src/test/renderWithProviders.tsx` — wraps any component with `MemoryRouter` + `QueryClientProvider`; returns `{ user, ...renderResult }` where `user` is a pre-configured `userEvent` instance. The `MemoryRouter` is required because any page that renders a `<Link>` will throw without Router context.
 
 **Writing tests:**
 - Mock service modules at the top of the file using a path relative to the test file: `vi.mock('../../services/users')`
 - Use `renderWithProviders(<MyPage />)` and destructure `user` for interactions
 - Prefer `findBy*` (async) when waiting for data to load; use `within(dialog)` to scope queries to open dialogs
 - MUI-specific: `Switch` has `role="switch"` not `role="checkbox"`; query Chips by their label text
-- MUI `Select` requires explicit `id` and `labelId` on the `Select`/`InputLabel` pair for `getByLabel` to resolve it in tests
+- MUI `Select` requires explicit `id` and `labelId` on the `Select`/`InputLabel` pair for `getByLabel` to resolve it in tests. A `Select` without an `InputLabel` (e.g., one whose visual label is a separate Typography) must be queried with `getByRole('combobox')` instead.
+- When fully mocking `react-router-dom` (e.g. `vi.mock('react-router-dom', () => ({ useParams, useNavigate }))`), include a passthrough `MemoryRouter` in the factory — otherwise `renderWithProviders` (which imports `MemoryRouter` from the same module) will receive `undefined`: `MemoryRouter: ({ children }: { children: ReactNode }) => <>{children}</>`
+- Avoid `getByText(/partialName/)` when the same text appears in multiple elements (e.g. a header field and a message bubble). Use a regex that matches a unique combination: `getByText(/Alice Tester.*alice@example\.com/)`
 - Add `noValidate` to every `<form>` so react-hook-form/Zod owns all validation — without it, browsers block submit on `type="email"` inputs before react-hook-form fires
 - The `ResizeObserver` stub in `setup.ts` must be a `class` (not an arrow function) so MUI `TextareaAutosize` can call `new ResizeObserver(...)` without throwing
 

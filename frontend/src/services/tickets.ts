@@ -19,7 +19,13 @@ export type Message = {
 	createdAt: string;
 };
 
-export type TicketDetail = Ticket & { body: string; messages: Message[] };
+export type AssignedAgent = { id: string; name: string; email: string };
+
+export type TicketDetail = Ticket & {
+	body: string;
+	messages: Message[];
+	assignedAgent: AssignedAgent | null;
+};
 
 export async function getTickets(params?: {
 	status?: string;
