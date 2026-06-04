@@ -66,7 +66,7 @@ export function CreateTicketDialog({
 
 	return (
 		<Dialog open={open} onClose={handleClose}>
-			<form onSubmit={handleSubmit((data) => mutation.mutate(data))}>
+			<form noValidate onSubmit={handleSubmit((data) => mutation.mutate(data))}>
 				<DialogTitle>Create Ticket</DialogTitle>
 				<DialogContent>
 					<FieldStack>
@@ -135,9 +135,11 @@ export function CreateTicketDialog({
 							name='category'
 							render={({ field: { value, onChange, ...rest } }) => (
 								<FormControl fullWidth>
-									<InputLabel>Category</InputLabel>
+									<InputLabel id='category-label'>Category</InputLabel>
 									<Select
 										{...rest}
+										labelId='category-label'
+										id='category-select'
 										value={value ?? ''}
 										onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
 										label='Category'

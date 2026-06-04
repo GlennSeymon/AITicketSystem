@@ -70,7 +70,7 @@ bun run test:components   # Vitest run (headless, single pass)
 
 # E2E tests (from root) — stop dev backend first (test frontend takes port 3001)
 bun run test:e2e          # Headless Playwright run
-bun run test:e2e:ui       # Interactive Playwright UI
+bun run test:e2e:ui       # Interactive Playwright UI — open http://localhost:8080 in your Windows browser (WSL2)
 
 # Writing E2E tests — use the e2e-test-writer agent:
 # "use e2e-test-writer to write tests for <feature>"

@@ -9,7 +9,7 @@
     "db:seed": "bun run --cwd backend db:seed",
     "test:components": "bun run --cwd frontend test",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "xvfb-run --auto-servernum playwright test --ui"
+    "test:e2e:ui": "playwright test --ui --ui-host=0.0.0.0 --ui-port=8080"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
