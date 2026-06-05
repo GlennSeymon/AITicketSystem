@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { createTicketSchema, updateTicketSchema, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '@repo/core';
+import { createTicketSchema, updateTicketSchema, createReplySchema, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '@repo/core';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import {
-	MessageDirection,
+	ReplyDirection,
+	SenderType,
 	TicketCategory,
 	TicketStatus,
 } from '../generated/prisma/client';
@@ -97,8 +98,8 @@ router.post(
 				},
 				select: TICKET_SELECT,
 			});
-			await tx.message.create({
-				data: { ticketId: t.id, body, direction: MessageDirection.INBOUND },
+			await tx.reply.create({
+				data: { ticketId: t.id, body, direction: ReplyDirection.INBOUND, senderType: SenderType.CUSTOMER },
 			});
 			return t;
 		});
@@ -119,9 +120,12 @@ router.get(
 		const ticket = await prisma.ticket.findUnique({
 			where: { id },
 			include: {
-					messages: { orderBy: { createdAt: 'asc' } },
-					assignedAgent: { select: { id: true, name: true, email: true } },
+				replies: {
+					orderBy: { createdAt: 'asc' },
+					include: { author: { select: { id: true, name: true } } },
 				},
+				assignedAgent: { select: { id: true, name: true, email: true } },
+			},
 		});
 
 		if (!ticket) {
@@ -172,6 +176,35 @@ router.patch(
 			});
 
 		res.json(ticket);
+	}),
+);
+
+router.post(
+	'/:id/replies',
+	asyncHandler(async (req, res) => {
+		const id = parseInt(req.params.id, 10);
+		if (isNaN(id)) {
+			res.status(400).json({ error: 'Invalid ticket ID' });
+			return;
+		}
+
+		const parsed = createReplySchema.safeParse(req.body);
+		if (!parsed.success) {
+			res.status(400).json({ error: parsed.error.issues[0].message });
+			return;
+		}
+
+		const ticket = await prisma.ticket.findUnique({ where: { id }, select: { id: true } });
+		if (!ticket) {
+			res.status(404).json({ error: 'Not found' });
+			return;
+		}
+
+		const reply = await prisma.reply.create({
+			data: { ticketId: id, body: parsed.data.body, direction: ReplyDirection.OUTBOUND, senderType: SenderType.AGENT, authorId: req.user.id },
+		});
+
+		res.status(201).json(reply);
 	}),
 );
 

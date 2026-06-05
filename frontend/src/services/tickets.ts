@@ -12,10 +12,12 @@ export type Ticket = {
 	updatedAt: string;
 };
 
-export type Message = {
+export type Reply = {
 	id: string;
 	body: string;
 	direction: 'INBOUND' | 'OUTBOUND';
+	senderType: 'CUSTOMER' | 'AGENT' | null;
+	author: { id: string; name: string } | null;
 	createdAt: string;
 };
 
@@ -23,7 +25,7 @@ export type AssignedAgent = { id: string; name: string; email: string };
 
 export type TicketDetail = Ticket & {
 	body: string;
-	messages: Message[];
+	replies: Reply[];
 	assignedAgent: AssignedAgent | null;
 };
 
@@ -59,5 +61,14 @@ export async function updateTicket(id: number, data: UpdateTicketInput): Promise
 		return ticket;
 	} catch (err) {
 		throw extractError(err, 'Failed to update ticket');
+	}
+}
+
+export async function createReply(ticketId: number, body: string): Promise<Reply> {
+	try {
+		const { data } = await api.post<Reply>(`/api/tickets/${ticketId}/replies`, { body });
+		return data;
+	} catch (err) {
+		throw extractError(err, 'Failed to send reply');
 	}
 }

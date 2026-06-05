@@ -2,9 +2,13 @@ import { z } from 'zod';
 
 export const ticketStatusEnum = z.enum(['OPEN', 'RESOLVED', 'CLOSED']);
 export const ticketCategoryEnum = z.enum(['GENERAL', 'TECHNICAL', 'REFUND', 'UNCATEGORISED']);
+export const senderTypeEnum = z.enum(['CUSTOMER', 'AGENT']);
+export const replyDirectionEnum = z.enum(['INBOUND', 'OUTBOUND']);
 
 export const TicketStatus = ticketStatusEnum.enum;
 export const TicketCategory = ticketCategoryEnum.enum;
+export const SenderType = senderTypeEnum.enum;
+export const ReplyDirection = replyDirectionEnum.enum;
 
 export const createTicketSchema = z.object({
 	subject: z.string().trim().min(1, 'Subject is required'),
@@ -20,5 +24,10 @@ export const updateTicketSchema = z.object({
 	assignedAgentId: z.string().nullable().optional(),
 });
 
+export const createReplySchema = z.object({
+	body: z.string().trim().min(1, 'Reply cannot be empty'),
+});
+
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
+export type CreateReplyInput = z.infer<typeof createReplySchema>;

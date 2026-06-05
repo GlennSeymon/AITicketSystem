@@ -7,7 +7,6 @@ import {
 	Alert,
 	Button,
 	Chip,
-	Container,
 	FormControl,
 	InputLabel,
 	MenuItem,
@@ -16,6 +15,7 @@ import {
 	Typography,
 	styled,
 } from '@mui/material';
+import { PageContainer, PageHeader } from '../../components/layout';
 import {
 	DataGrid,
 	type GridColDef,
@@ -26,17 +26,6 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { CreateTicketDialog } from './CreateTicketDialog';
 import { formatDate, statusColor } from '../../lib/format';
-
-const PageContainer = styled(Container)(({ theme }) => ({
-	paddingTop: theme.spacing(4),
-}));
-
-const PageHeader = styled('div')({
-	display: 'flex',
-	justifyContent: 'space-between',
-	alignItems: 'center',
-	marginBottom: '1rem',
-});
 
 const FilterBar = styled('div')(({ theme }) => ({
 	display: 'flex',

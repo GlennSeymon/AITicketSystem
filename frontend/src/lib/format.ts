@@ -17,3 +17,14 @@ export function formatDate(iso: string) {
 		day: 'numeric',
 	});
 }
+
+export function formatDateTime(iso: string) {
+	return new Date(iso).toLocaleString(undefined, {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+}

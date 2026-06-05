@@ -25,9 +25,14 @@ enum TicketCategory {
   UNCATEGORISED
 }
 
-enum MessageDirection {
+enum ReplyDirection {
   INBOUND
   OUTBOUND
+}
+
+enum SenderType {
+  CUSTOMER
+  AGENT
 }
 
 model user {
@@ -43,6 +48,7 @@ model user {
   sessions        session[]
   accounts        account[]
   assignedTickets Ticket[]
+  authoredReplies Reply[]
 
   @@map("user")
 }
@@ -104,18 +110,25 @@ model Ticket {
   aiSummary         String?
   assignedAgentId   String?
   assignedAgent     user?           @relation(fields: [assignedAgentId], references: [id])
-  messages          Message[]
+  replies           Reply[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+
+  @@map("ticket")
 }
 
-model Message {
-  id        String           @id @default(cuid())
-  ticketId  Int
-  ticket    Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  body      String
-  direction MessageDirection
-  createdAt DateTime         @default(now())
+model Reply {
+  id         String           @id @default(cuid())
+  ticketId   Int
+  ticket     Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  body       String
+  direction  ReplyDirection
+  senderType SenderType?
+  authorId   String?
+  author     user?            @relation(fields: [authorId], references: [id])
+  createdAt  DateTime         @default(now())
+
+  @@map("reply")
 }
 
 model KBArticle {
@@ -125,4 +138,6 @@ model KBArticle {
   embedding Unsupported("vector(384)")?
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
+
+  @@map("kbArticle")
 }

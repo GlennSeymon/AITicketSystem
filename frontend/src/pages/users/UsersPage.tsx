@@ -6,7 +6,6 @@ import {
 	Alert,
 	Button,
 	Chip,
-	Container,
 	Skeleton,
 	Dialog,
 	DialogActions,
@@ -29,17 +28,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { CreateUserDialog } from './CreateUserDialog';
 import { EditUserDialog } from './EditUserDialog';
-
-const PageContainer = styled(Container)(({ theme }) => ({
-	paddingTop: theme.spacing(4),
-}));
-
-const PageHeader = styled('div')({
-	display: 'flex',
-	justifyContent: 'space-between',
-	alignItems: 'center',
-	marginBottom: '1.5rem',
-});
+import { PageContainer, PageHeader } from '../../components/layout';
 
 const RightAlignCell = styled(TableCell)({
 	textAlign: 'right',

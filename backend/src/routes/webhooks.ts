@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import { requireWebhookSecret } from '../require-webhook-secret';
-import { MessageDirection, TicketCategory, TicketStatus } from '../generated/prisma/client';
+import { ReplyDirection, SenderType, TicketCategory, TicketStatus } from '../generated/prisma/client';
 
 const router = Router();
 
@@ -43,8 +43,8 @@ router.post('/inbound-email', requireWebhookSecret, asyncHandler(async (req, res
 	});
 
 	if (existing) {
-		await prisma.message.create({
-			data: { ticketId: existing.id, body, direction: MessageDirection.INBOUND },
+		await prisma.reply.create({
+			data: { ticketId: existing.id, body, direction: ReplyDirection.INBOUND, senderType: SenderType.CUSTOMER },
 		});
 		res.status(200).json(existing);
 		return;
@@ -60,8 +60,8 @@ router.post('/inbound-email', requireWebhookSecret, asyncHandler(async (req, res
 				category: TicketCategory.GENERAL,
 			},
 		});
-		await tx.message.create({
-			data: { ticketId: t.id, body, direction: MessageDirection.INBOUND },
+		await tx.reply.create({
+			data: { ticketId: t.id, body, direction: ReplyDirection.INBOUND, senderType: SenderType.CUSTOMER },
 		});
 		return t;
 	});

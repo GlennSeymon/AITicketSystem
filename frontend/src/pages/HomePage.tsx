@@ -1,10 +1,6 @@
-import { Container, Typography, styled } from '@mui/material';
+import { Typography, styled } from '@mui/material';
 import { authClient } from '../lib/authClient';
-
-const PageContainer = styled(Container)(({ theme }) => ({
-	paddingTop: theme.spacing(4),
-	textAlign: 'left',
-}));
+import { PageContainer } from '../components/layout';
 
 const WelcomeHeading = styled(Typography)({
 	fontWeight: 500,
