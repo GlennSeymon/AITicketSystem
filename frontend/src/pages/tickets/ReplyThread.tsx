@@ -1,6 +1,6 @@
 import { Paper, Typography, styled } from '@mui/material';
 import { SenderType, ReplyDirection } from '@repo/core';
-import type { TicketDetail } from '../../services/tickets';
+import type { Ticket } from '../../services/tickets';
 import { formatDateTime } from '../../lib/format';
 
 const ThreadContainer = styled('div')({
@@ -36,7 +36,7 @@ const EmptyState = styled(Typography)({
 });
 
 interface ReplyThreadProps {
-	ticket: TicketDetail;
+	ticket: Ticket;
 }
 
 export function ReplyThread({ ticket }: ReplyThreadProps) {

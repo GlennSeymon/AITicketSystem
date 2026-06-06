@@ -1,27 +1,19 @@
 import api, { extractError } from '../lib/api';
 
-export type User = {
+export interface User {
 	id: string;
 	name: string;
 	email: string;
 	role: 'ADMIN' | 'AGENT';
 	isActive: boolean;
 	createdAt: string;
-};
+}
 
-export type CreateUserData = {
-	name: string;
-	email: string;
+export interface CreateUserData extends Pick<User, 'name' | 'email' | 'role'> {
 	password: string;
-	role: 'ADMIN' | 'AGENT';
-};
+}
 
-export type UpdateUserData = {
-	name?: string;
-	email?: string;
-	role?: 'ADMIN' | 'AGENT';
-	isActive?: boolean;
-};
+export type UpdateUserData = Partial<Pick<User, 'name' | 'email' | 'role' | 'isActive'>>;
 
 export async function getUsers(): Promise<User[]> {
 	const { data } = await api.get<User[]>('/api/users');

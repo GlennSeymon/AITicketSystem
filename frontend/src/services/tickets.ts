@@ -1,7 +1,22 @@
 import api, { extractError } from '../lib/api';
 import type { CreateTicketInput, UpdateTicketInput } from '@repo/core';
 
-export type Ticket = {
+export interface Reply {
+	id: string;
+	body: string;
+	direction: 'INBOUND' | 'OUTBOUND';
+	senderType: 'CUSTOMER' | 'AGENT' | null;
+	author: { id: string; name: string } | null;
+	createdAt: string;
+}
+
+export interface AssignedAgent {
+	id: string;
+	name: string;
+	email: string;
+}
+
+export interface Ticket {
 	id: number;
 	subject: string;
 	fromEmail: string;
@@ -10,24 +25,10 @@ export type Ticket = {
 	category: string | null;
 	createdAt: string;
 	updatedAt: string;
-};
-
-export type Reply = {
-	id: string;
-	body: string;
-	direction: 'INBOUND' | 'OUTBOUND';
-	senderType: 'CUSTOMER' | 'AGENT' | null;
-	author: { id: string; name: string } | null;
-	createdAt: string;
-};
-
-export type AssignedAgent = { id: string; name: string; email: string };
-
-export type TicketDetail = Ticket & {
 	body: string;
 	replies: Reply[];
 	assignedAgent: AssignedAgent | null;
-};
+}
 
 export async function getTickets(params?: {
 	status?: string;
@@ -50,8 +51,8 @@ export async function createTicket(data: CreateTicketInput): Promise<Ticket> {
 	}
 }
 
-export async function getTicket(id: number): Promise<TicketDetail> {
-	const { data } = await api.get<TicketDetail>(`/api/tickets/${id}`);
+export async function getTicket(id: number): Promise<Ticket> {
+	const { data } = await api.get<Ticket>(`/api/tickets/${id}`);
 	return data;
 }
 

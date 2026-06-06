@@ -4,7 +4,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { useParams } from 'react-router-dom';
 import TicketDetailPage from './TicketDetailPage';
 import { getTicket, updateTicket, createReply } from '../../services/tickets';
-import type { TicketDetail, Ticket, Reply } from '../../services/tickets';
+import type { Ticket, Reply } from '../../services/tickets';
 import { getAgents } from '../../services/agents';
 import type { Agent } from '../../services/agents';
 import { renderWithProviders } from '../../test/renderWithProviders';
@@ -22,7 +22,7 @@ const mockAgents: Agent[] = [
 	{ id: 'agent-2', name: 'Agent Bob', email: 'agent-bob@example.com' },
 ];
 
-const mockTicket: TicketDetail = {
+const mockTicket: Ticket = {
 	id: 1,
 	subject: 'Cannot access module 3',
 	fromEmail: 'alice@example.com',
@@ -54,6 +54,9 @@ const mockTicketResponse: Ticket = {
 	category: 'TECHNICAL',
 	createdAt: '2026-06-04T00:00:00.000Z',
 	updatedAt: '2026-06-05T00:00:00.000Z',
+	body: '',
+	replies: [],
+	assignedAgent: null,
 };
 
 const mockReply: Reply = {

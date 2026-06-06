@@ -7,8 +7,11 @@ import { renderWithProviders } from '../../test/renderWithProviders';
 
 vi.mock('../../services/tickets');
 
+const ticketDefaults = { body: '', replies: [], assignedAgent: null };
+
 const mockTickets: Ticket[] = [
 	{
+		...ticketDefaults,
 		id: 1,
 		subject: 'Cannot access module 3',
 		fromName: 'Alice Tester',
@@ -19,6 +22,7 @@ const mockTickets: Ticket[] = [
 		updatedAt: '2026-06-04T00:00:00.000Z',
 	},
 	{
+		...ticketDefaults,
 		id: 2,
 		subject: 'Refund request',
 		fromName: 'Bob Checker',
@@ -31,6 +35,7 @@ const mockTickets: Ticket[] = [
 ];
 
 const newTicket: Ticket = {
+	...ticketDefaults,
 	id: 3,
 	subject: 'New ticket subject',
 	fromName: 'Charlie New',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateTicket, type TicketDetail as TicketDetailData } from '../../services/tickets';
+import { updateTicket, type Ticket } from '../../services/tickets';
 import { getAgents } from '../../services/agents';
 import { TicketStatus, TicketCategory } from '@repo/core';
 import {
@@ -20,7 +20,7 @@ import { MetaLabel } from './TicketDetail';
 const SrOnlyLabel = styled(InputLabel)(visuallyHidden);
 
 interface TicketUpdateProps {
-	ticket: TicketDetailData;
+	ticket: Ticket;
 }
 
 export function TicketUpdate({ ticket }: TicketUpdateProps) {

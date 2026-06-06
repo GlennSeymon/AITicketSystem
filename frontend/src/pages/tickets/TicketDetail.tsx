@@ -1,4 +1,4 @@
-import { type TicketDetail as TicketDetailData } from '../../services/tickets';
+import { type Ticket } from '../../services/tickets';
 import { Box, Stack, Typography, styled } from '@mui/material';
 import { formatDate } from '../../lib/format';
 
@@ -15,7 +15,7 @@ const MetaValue = styled(Typography)({
 });
 
 interface TicketDetailProps {
-	ticket: TicketDetailData;
+	ticket: Ticket;
 }
 
 export function TicketDetail({ ticket }: TicketDetailProps) {
