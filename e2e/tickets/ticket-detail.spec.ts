@@ -1,14 +1,15 @@
 /**
- * Ticket Detail — e2e tests (auth + routing + reply flow)
+ * Ticket Detail — e2e tests (auth + routing + reply flow + inline field editing)
  *
- * Component-level tests (loading states, inline field editing, form
- * validation) live in frontend/src/pages/tickets/TicketDetailPage.test.tsx.
+ * Component-level tests (loading states, form validation) live in
+ * frontend/src/pages/tickets/TicketDetailPage.test.tsx.
  *
  * Covers:
  *  1. Unauthenticated visit to /tickets/:id redirects to /login
  *  2. Clicking a ticket subject link on /tickets navigates to /tickets/:id
  *  3. Sending a reply appends it to the message thread with the agent's
  *     name and a datetime (h:mm:ss format)
+ *  4. Inline field editing (Status, Category, Assigned to) persists after reload
  */
 
 import { expect } from '@playwright/test';
@@ -112,5 +113,62 @@ test.describe('Reply flow', () => {
     // We match the agent name and a time-with-seconds pattern in the same region
     const metaPattern = new RegExp(`${agentName}.*\\d+:\\d{2}:\\d{2}`);
     await expect(agentPage.getByText(metaPattern)).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Inline field editing
+// ---------------------------------------------------------------------------
+
+test.describe('Inline field editing', () => {
+  test('changing the status select persists after reload', async ({ agentPage }) => {
+    // Tickets are seeded with no explicit status; the backend default is OPEN.
+    const ticketId = await createTicketViaApi(agentPage, 'E2E Status Edit — inline persist');
+
+    const detailPage = new TicketDetailPage(agentPage);
+    await detailPage.goto(ticketId);
+    await detailPage.expectOnDetailPage(ticketId);
+
+    // Change status from Open → Resolved
+    await detailPage.changeInlineSelect('Status', 'Resolved');
+
+    // Reload and confirm the value was persisted server-side
+    await agentPage.reload();
+    await detailPage.expectOnDetailPage(ticketId);
+    await detailPage.expectInlineSelectValue('Status', 'Resolved');
+  });
+
+  test('changing the category select persists after reload', async ({ agentPage }) => {
+    // Ticket is created with category TECHNICAL; change it to General.
+    const ticketId = await createTicketViaApi(agentPage, 'E2E Category Edit — inline persist');
+
+    const detailPage = new TicketDetailPage(agentPage);
+    await detailPage.goto(ticketId);
+    await detailPage.expectOnDetailPage(ticketId);
+
+    // Change category from Technical → General
+    await detailPage.changeInlineSelect('Category', 'General');
+
+    // Reload and confirm the value was persisted server-side
+    await agentPage.reload();
+    await detailPage.expectOnDetailPage(ticketId);
+    await detailPage.expectInlineSelectValue('Category', 'General');
+  });
+
+  test('assigning an agent persists after reload', async ({ agentPage }) => {
+    // The seeded agent is named 'Test Agent' (from seed.test.ts).
+    const ticketId = await createTicketViaApi(agentPage, 'E2E Agent Assign — inline persist');
+
+    const detailPage = new TicketDetailPage(agentPage);
+    await detailPage.goto(ticketId);
+    await detailPage.expectOnDetailPage(ticketId);
+
+    // Assign to Test Agent (ticket starts unassigned)
+    await detailPage.changeInlineSelect('Assigned to', 'Test Agent');
+
+    // Reload and confirm the assignment was persisted server-side
+    await agentPage.reload();
+    await detailPage.expectOnDetailPage(ticketId);
+    await detailPage.expectInlineSelectValue('Assigned to', 'Test Agent');
   });
 });

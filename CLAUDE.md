@@ -138,7 +138,7 @@ Component tests use **Vitest** + **React Testing Library** and live alongside th
 
 **Component vs E2E split:**
 - **Component tests** — anything testable in isolation: rendering states (loading, error, empty), table/list display, dialog open/close, form validation, mutation calls, cancel behaviour
-- **E2E tests** — only what requires the full stack: auth redirects, role-based routing, cross-page navigation, full create-then-list flows that depend on real network + DB
+- **E2E tests** — only what genuinely cannot be tested with unit tests: auth redirects, role-based routing, DB writes that must persist across a page reload, and full flows that depend on real network + DB state. Do NOT write e2e tests for things already covered by unit tests — pure link navigation, component rendering, and form validation are all unit-testable. When in doubt, ask: "would a mock satisfy this?" — if yes, it belongs in a component test.
 
 **Key library IDs for context7:**
 - React Testing Library: `/testing-library/testing-library-docs`
