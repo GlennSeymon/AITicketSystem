@@ -182,6 +182,7 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - **Never use `.default()` in shared schemas** — Zod's `.default()` splits the schema into mismatched input/output types, which breaks `zodResolver` in react-hook-form with a type error on the `resolver` prop. Apply defaults in the form's `defaultValues` instead.
 - **Inline optimistic edit pattern** — For inline-editable fields (Select that fires on change), use a local state variable initialised to `''` and a dedicated `useMutation` per field. Set local state immediately before calling `mutate()`, then derive the displayed value as `mutation.isPending ? localValue : serverValue`. Use separate mutations per field so one field's pending state never masks another field's current value.
 - **Displaying enum values** — Database enums are stored uppercase (`OPEN`, `TECHNICAL`). Display them in title case using `toTitleCase()` from `src/lib/format.ts`. The Select `value` prop stays as the uppercase enum string; only the `MenuItem` label uses title case.
+- **User deletion is a soft delete** — `DELETE /api/users/:id` sets `isActive: false` on the user row rather than removing it. In the same transaction it unassigns all tickets where `assignedAgentId` matches, setting that field to `null`. Never hard-delete a user row.
 
 ## Documentation
 
