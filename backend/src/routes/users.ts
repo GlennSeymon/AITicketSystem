@@ -104,7 +104,16 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 		return;
 	}
 
-	await prisma.user.delete({ where: { id } });
+	await prisma.$transaction([
+		prisma.ticket.updateMany({
+			where: { assignedAgentId: id },
+			data: { assignedAgentId: null },
+		}),
+		prisma.user.update({
+			where: { id },
+			data: { isActive: false },
+		}),
+	]);
 	res.status(204).send();
 }));
 
