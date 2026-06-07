@@ -11,10 +11,10 @@ export const SenderType = senderTypeEnum.enum;
 export const ReplyDirection = replyDirectionEnum.enum;
 
 export const createTicketSchema = z.object({
-	subject: z.string().trim().min(1, 'Subject is required'),
-	fromEmail: z.string().email('Invalid email'),
-	fromName: z.string().trim().min(1, 'From name is required'),
-	body: z.string().trim().min(1, 'Body is required'),
+	subject: z.string().trim().min(1, 'Subject is required').max(255, 'Subject must be 255 characters or fewer'),
+	fromEmail: z.string().email('Invalid email').max(254, 'Email must be 254 characters or fewer'),
+	fromName: z.string().trim().min(1, 'From name is required').max(100, 'From name must be 100 characters or fewer'),
+	body: z.string().trim().min(1, 'Body is required').max(2000, 'Body must be 2,000 characters or fewer'),
 	category: ticketCategoryEnum.optional(),
 });
 
@@ -25,7 +25,7 @@ export const updateTicketSchema = z.object({
 });
 
 export const createReplySchema = z.object({
-	body: z.string().trim().min(1, 'Reply cannot be empty'),
+	body: z.string().trim().min(1, 'Reply cannot be empty').max(2000, 'Reply must be 2,000 characters or fewer'),
 });
 
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;

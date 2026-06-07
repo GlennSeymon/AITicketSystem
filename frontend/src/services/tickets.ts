@@ -4,6 +4,7 @@ import type { CreateTicketInput, UpdateTicketInput } from '@repo/core';
 export interface Reply {
 	id: string;
 	body: string;
+	bodyHTML: string | null;
 	direction: 'INBOUND' | 'OUTBOUND';
 	senderType: 'CUSTOMER' | 'AGENT' | null;
 	author: { id: string; name: string } | null;

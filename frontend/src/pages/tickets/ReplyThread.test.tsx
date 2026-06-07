@@ -21,6 +21,7 @@ const baseTicket: Ticket = {
 const customerReply: Reply = {
 	id: 'reply-1',
 	body: 'I still cannot access it.',
+	bodyHTML: null,
 	direction: 'INBOUND',
 	senderType: 'CUSTOMER',
 	author: null,
@@ -30,6 +31,7 @@ const customerReply: Reply = {
 const agentReply: Reply = {
 	id: 'reply-2',
 	body: 'We are looking into this.',
+	bodyHTML: null,
 	direction: 'OUTBOUND',
 	senderType: 'AGENT',
 	author: { id: 'agent-1', name: 'Agent Alice' },
@@ -51,6 +53,18 @@ describe('ReplyThread', () => {
 
 	describe('reply body', () => {
 		it('renders the reply body text', () => {
+			renderWithProviders(<ReplyThread ticket={{ ...baseTicket, replies: [customerReply] }} />);
+			expect(screen.getByText('I still cannot access it.')).toBeInTheDocument();
+		});
+
+		it('renders bodyHTML when present instead of body', () => {
+			const htmlReply: Reply = { ...customerReply, body: 'plain text', bodyHTML: '<strong>rich text</strong>' };
+			renderWithProviders(<ReplyThread ticket={{ ...baseTicket, replies: [htmlReply] }} />);
+			expect(screen.getByText('rich text')).toBeInTheDocument();
+			expect(screen.queryByText('plain text')).not.toBeInTheDocument();
+		});
+
+		it('falls back to body when bodyHTML is null', () => {
 			renderWithProviders(<ReplyThread ticket={{ ...baseTicket, replies: [customerReply] }} />);
 			expect(screen.getByText('I still cannot access it.')).toBeInTheDocument();
 		});

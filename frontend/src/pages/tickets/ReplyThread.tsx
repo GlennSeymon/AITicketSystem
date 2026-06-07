@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import { Paper, Typography, styled } from '@mui/material';
 import { SenderType, ReplyDirection } from '@repo/core';
 import type { Ticket } from '../../services/tickets';
@@ -53,7 +54,10 @@ export function ReplyThread({ ticket }: ReplyThreadProps) {
 							{isCustomer ? ticket.fromName : (reply.author?.name ?? 'Support')}{' '}
 							&middot; {formatDateTime(reply.createdAt)}
 						</ReplyMeta>
-						<ReplyBody variant='body2'>{reply.body}</ReplyBody>
+						<ReplyBody
+							variant='body2'
+							dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reply.bodyHTML ?? reply.body) }}
+						/>
 					</Bubble>
 				);
 			})}
