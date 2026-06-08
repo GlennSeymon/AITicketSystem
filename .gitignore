@@ -8,3 +8,7 @@ test-results/
 blob-report/
 .idea/
 *.deb
+.agents/
+.claude/skills/
+.claude/agent-memory/
+skills-lock.json
