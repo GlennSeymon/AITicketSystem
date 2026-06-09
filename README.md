@@ -7,25 +7,27 @@ An AI-powered support ticket system for an online programming course business. I
 ## Features
 
 - **Email ingestion** — Receives support emails via Postmark webhooks and creates tickets
-- **AI classification** — Automatically categorises tickets (General, Technical, Refund) using Claude Haiku
-- **AI response drafting** — Searches a knowledge base semantically and drafts a reply using Claude Sonnet
+- **AI classification** — Automatically categorises tickets (General, Technical, Refund) using GPT-4o Mini via a background job queue
+- **AI auto-resolution** — New tickets are assigned to an AI agent that attempts to resolve them from the knowledge base; falls back to the human agent queue if no answer is found
+- **AI response drafting** — Searches a knowledge base semantically and drafts a reply using GPT-4o Mini
 - **Human approval workflow** — Agents review and approve AI drafts before any email is sent
-- **Polish feature** — Agents can write a rough reply and have Claude refine the tone and wording
+- **Polish feature** — Agents can write a rough reply and have the AI refine the tone and wording
 - **AI summaries** — One-paragraph ticket summaries for fast scanning
 - **Knowledge base management** — Admins build and maintain KB articles; semantic search powered by local embeddings
 - **User management** — Admin creates and manages agent accounts
-- **Dashboard** — Ticket queue with filtering by status and category, plus stats overview
+- **Metrics dashboard** — Total tickets, open tickets, AI resolution rate, average resolution time, and a 30-day ticket volume chart
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite + MUI |
+| Frontend | React 18 + TypeScript + Vite + MUI v9 |
 | Backend | Express + TypeScript + Bun |
 | Database | PostgreSQL 16 + pgvector |
 | ORM | Prisma 7 |
-| Auth | express-session + connect-pg-simple + bcrypt |
-| AI | Anthropic Claude API (Haiku + Sonnet) |
+| Auth | Better Auth (email/password, database sessions) |
+| AI | OpenAI API via Vercel AI SDK (`gpt-4o-mini`) |
+| Queue | pg-boss (PostgreSQL-backed job queue) |
 | Embeddings | @xenova/transformers (local, no API key) |
 | Email | Postmark |
 
@@ -33,7 +35,7 @@ An AI-powered support ticket system for an online programming course business. I
 
 - [Bun](https://bun.sh) >= 1.0
 - [Docker](https://www.docker.com) (for PostgreSQL)
-- Anthropic API key
+- OpenAI API key
 - Postmark account (for email ingestion/sending)
 
 ## Getting Started
@@ -56,12 +58,16 @@ Edit `backend/.env` and fill in your credentials:
 
 ```
 DATABASE_URL="postgresql://helpdesk:helpdesk@localhost:5433/tickets"
-SESSION_SECRET="your-secret-here"
-POSTMARK_TOKEN="your-postmark-token"
-ANTHROPIC_API_KEY="your-anthropic-key"
+BETTER_AUTH_SECRET="your-secret-here"
+BETTER_AUTH_URL="http://localhost:3001"
+BETTER_AUTH_TRUSTED_ORIGINS="http://localhost:3000"
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASSWORD="your-admin-password"
+AGENT_EMAIL="agent@example.com"
+AGENT_PASSWORD="your-agent-password"
 PORT=3001
+WEBHOOK_SECRET="your-webhook-secret"
+OPENAI_API_KEY="your-openai-key"
 ```
 
 **3. Start the database**
@@ -70,12 +76,14 @@ PORT=3001
 docker compose up -d
 ```
 
-**4. Run database migrations and seed the admin user**
+**4. Run database migrations and seed users**
 
 ```bash
 bun run db:migrate
 bun run db:seed
 ```
+
+The seed creates an admin user, a human agent, and the internal AI agent (`ai@ticketsystem.internal`).
 
 **5. Start the development servers**
 
@@ -89,11 +97,14 @@ bun run dev:frontend   # http://localhost:3000
 
 ```
 AITicketSystem/
+├── core/                     # Shared Zod schemas + types (@repo/core)
 ├── backend/
 │   ├── src/
 │   │   ├── index.ts          # Express entry point
+│   │   ├── constants.ts      # Shared constants (AI_AGENT_EMAIL, etc.)
+│   │   ├── queue.ts          # pg-boss job queue setup
 │   │   ├── routes/           # API route handlers
-│   │   ├── services/         # ai.ts, email.ts, kb.ts, embeddings.ts
+│   │   ├── services/         # classifyTicket, autoResolve, kb, embeddings
 │   │   └── middleware/       # Auth, validation
 │   ├── prisma/
 │   │   └── schema.prisma
@@ -103,10 +114,9 @@ AITicketSystem/
 │   │   ├── main.tsx
 │   │   └── App.tsx
 │   └── vite.config.ts
+├── e2e/                      # Playwright end-to-end tests
 ├── docker-compose.yml
-├── implementation-plan.md
-├── projectScope.md
-└── tech-stack.md
+└── .env.example
 ```
 
 ## Ticket Workflow
@@ -115,19 +125,29 @@ AITicketSystem/
 Incoming email (Postmark webhook)
         │
         ▼
-  Auto-classify (Claude Haiku)
+  Ticket created → assigned to AI agent (status: NEW)
         │
         ▼
-  KB semantic search + draft response (Claude Sonnet)
+  pg-boss queues classification job
         │
         ▼
-  Agent reviews draft → edits if needed → approves
+  Auto-classify category (GPT-4o Mini) → status: PROCESSING
         │
         ▼
-  Email sent to customer (Postmark)
+  KB semantic search + draft response attempt
         │
-        ▼
-  Ticket marked Resolved
+        ├─── Match found → reply sent, status: RESOLVED (AI agent stays assigned)
+        │
+        └─── No match → status: OPEN, unassigned (enters human agent queue)
+                │
+                ▼
+          Agent reviews → edits if needed → approves
+                │
+                ▼
+          Email sent to customer (Postmark)
+                │
+                ▼
+          Ticket marked Resolved / Closed
 ```
 
 ## User Roles
@@ -139,8 +159,10 @@ Incoming email (Postmark webhook)
 
 ## Ticket Statuses
 
-- **Open** — received, awaiting response
-- **Resolved** — response sent to customer
+- **New** — just arrived, queued for AI processing
+- **Processing** — AI is attempting auto-resolution
+- **Open** — ready for human agent review
+- **Resolved** — resolved by AI or human agent
 - **Closed** — confirmed closed, no further action needed
 
 ## API

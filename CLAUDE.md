@@ -251,11 +251,12 @@ Copy `backend/.env.example` (or root `.env.example`) to `backend/.env` and fill 
 DATABASE_URL="postgresql://helpdesk:helpdesk@localhost:5433/tickets"
 BETTER_AUTH_SECRET="..."
 BETTER_AUTH_URL="http://localhost:3001"
-ANTHROPIC_API_KEY="..."
+BETTER_AUTH_TRUSTED_ORIGINS="http://localhost:3000"
 ADMIN_EMAIL="..."
 ADMIN_PASSWORD="..."
 AGENT_EMAIL="..."
 AGENT_PASSWORD="..."
 PORT=3001
 WEBHOOK_SECRET="..."
+OPENAI_API_KEY="..."
 ```
