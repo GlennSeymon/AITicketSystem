@@ -211,6 +211,55 @@ router.post(
 );
 
 router.post(
+	'/:id/summarise',
+	asyncHandler(async (req, res) => {
+		const id = parseInt(req.params.id, 10);
+		if (isNaN(id)) {
+			res.status(400).json({ error: 'Invalid ticket ID' });
+			return;
+		}
+
+		const ticket = await prisma.ticket.findUnique({
+			where: { id },
+			include: {
+				replies: {
+					orderBy: { createdAt: 'asc' },
+					include: { author: { select: { name: true } } },
+				},
+			},
+		});
+
+		if (!ticket) {
+			res.status(404).json({ error: 'Not found' });
+			return;
+		}
+
+		const lines: string[] = [
+			`Subject: ${ticket.subject}`,
+			`Customer: ${ticket.fromName} <${ticket.fromEmail}>`,
+			'',
+		];
+		for (const reply of ticket.replies) {
+			const sender =
+				reply.senderType === SenderType.AGENT
+					? (reply.author?.name ?? 'Support Agent')
+					: ticket.fromName;
+			lines.push(`[${sender}]: ${reply.body}`);
+			lines.push('');
+		}
+
+		const result = streamText({
+			model: openai('gpt-5-nano'),
+			system:
+				'You are a support ticket assistant. Summarise the following customer support conversation concisely. Include the main issue, key points discussed, any resolutions offered, and the current status. Keep the summary to 3–5 sentences.',
+			prompt: lines.join('\n'),
+		});
+
+		result.pipeTextStreamToResponse(res);
+	}),
+);
+
+router.post(
 	'/polish-reply',
 	asyncHandler(async (req, res) => {
 		const parsed = polishReplySchema.safeParse(req.body);

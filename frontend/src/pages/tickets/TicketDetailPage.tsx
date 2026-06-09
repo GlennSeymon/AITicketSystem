@@ -8,6 +8,7 @@ import { TicketDetail } from './TicketDetail';
 import { TicketUpdate } from './TicketUpdate';
 import { ReplyThread } from './ReplyThread';
 import { ReplyForm } from './ReplyForm';
+import { TicketSummary } from './TicketSummary';
 
 
 const HeaderCard = styled(Paper)(({ theme }) => ({
@@ -84,6 +85,7 @@ export default function TicketDetailPage() {
 			</Typography>
 			<SectionDivider />
 			<ReplyThread ticket={ticket} />
+			<TicketSummary ticketId={ticketId} />
 
 			<ReplySectionWrapper>
 				<Typography variant='h6' gutterBottom>
