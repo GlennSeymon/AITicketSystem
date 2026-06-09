@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { createTicketSchema, updateTicketSchema, createReplySchema, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '@repo/core';
+import { streamText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { createTicketSchema, updateTicketSchema, createReplySchema, polishReplySchema, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '@repo/core';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import {
@@ -205,6 +207,28 @@ router.post(
 		});
 
 		res.status(201).json(reply);
+	}),
+);
+
+router.post(
+	'/polish-reply',
+	asyncHandler(async (req, res) => {
+		const parsed = polishReplySchema.safeParse(req.body);
+		if (!parsed.success) {
+			res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid request' });
+			return;
+		}
+
+		const { prompt, customerName, assigneeName } = parsed.data;
+		const signerName = assigneeName ?? req.user.name;
+		const greeting = customerName ? `Address the customer as "${customerName}" at the start of the reply. ` : '';
+		const result = streamText({
+			model: openai('gpt-5-nano'),
+			system: `You are a professional customer support agent named ${signerName}. Polish the following reply to be clear, empathetic, and professional. ${greeting}End the reply with this exact signature on its own line:\n\n${signerName}\nhttps://ticketsystem.com\n\nReturn only the improved reply text with no explanation or preamble.`,
+			prompt,
+		});
+
+		result.pipeTextStreamToResponse(res);
 	}),
 );
 

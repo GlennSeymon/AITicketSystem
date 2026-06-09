@@ -90,7 +90,7 @@ export default function TicketDetailPage() {
 					Reply
 				</Typography>
 				<SectionDivider />
-				<ReplyForm ticketId={ticketId} />
+				<ReplyForm ticketId={ticketId} customerName={ticket.fromName.split(' ')[0]} assigneeName={ticket.assignedAgent?.name} />
 			</ReplySectionWrapper>
 		</PageContainer>
 	);

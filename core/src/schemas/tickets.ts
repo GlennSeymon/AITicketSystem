@@ -28,6 +28,13 @@ export const createReplySchema = z.object({
 	body: z.string().trim().min(1, 'Reply cannot be empty').max(2000, 'Reply must be 2,000 characters or fewer'),
 });
 
+export const polishReplySchema = z.object({
+	prompt: z.string().trim().min(1, 'Prompt is required').max(2000, 'Prompt must be 2,000 characters or fewer'),
+	customerName: z.string().trim().optional(),
+	assigneeName: z.string().trim().optional(),
+});
+
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
 export type UpdateTicketInput = z.infer<typeof updateTicketSchema>;
 export type CreateReplyInput = z.infer<typeof createReplySchema>;
+export type PolishReplyInput = z.infer<typeof polishReplySchema>;
