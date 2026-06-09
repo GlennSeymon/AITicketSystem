@@ -260,12 +260,10 @@ describe('TicketDetailPage', () => {
 			expect(screen.getByRole('button', { name: /send reply/i })).toBeInTheDocument();
 		});
 
-		it('shows a validation error when the form is submitted empty', async () => {
-			const { user } = renderWithProviders(<TicketDetailPage />);
+		it('disables the Send Reply button when the reply textarea is empty', async () => {
+			renderWithProviders(<TicketDetailPage />);
 			await screen.findByText('Cannot access module 3');
-			await user.click(screen.getByRole('button', { name: /send reply/i }));
-			expect(await screen.findByText('Reply cannot be empty')).toBeInTheDocument();
-			expect(createReply).not.toHaveBeenCalled();
+			expect(screen.getByRole('button', { name: /send reply/i })).toBeDisabled();
 		});
 
 		it('calls createReply with the ticket ID and body on submit', async () => {
