@@ -52,6 +52,12 @@ aiTicketSystem/
 └── .env.example
 ```
 
+## Git
+
+**Never commit automatically.** After completing any task, stop — do not stage or commit anything. Wait for an explicit instruction to commit. When asked to commit, stage the relevant files and show a summary of what will be committed, then wait for confirmation before running `git commit`.
+
+Never include the `Co-Authored-By: Claude` trailer in commit messages.
+
 ## Dev Commands
 
 ```bash
