@@ -13,7 +13,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **Database:** PostgreSQL 16 + pgvector (Docker)
 - **ORM:** Prisma 7
 - **Auth:** Better Auth (email/password, database sessions)
-- **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-4o-mini` for classification
+- **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-5-nano` for all AI tasks (classification, auto-resolution, summarise, polish)
 - **Queue:** pg-boss (PostgreSQL-backed job queue); `backend/src/queue.ts` exports `boss`, `Queues`, and `startQueue()`
 - **Embeddings:** @xenova/transformers — local, no API key required
 - **Email:** Inbound webhook (`POST /api/webhooks/inbound-email`); auth via `x-webhook-secret` header or `?secret=` query param; outbound via Postmark (future)

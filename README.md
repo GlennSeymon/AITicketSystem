@@ -7,9 +7,9 @@ An AI-powered support ticket system for an online programming course business. I
 ## Features
 
 - **Email ingestion** — Receives support emails via Postmark webhooks and creates tickets
-- **AI classification** — Automatically categorises tickets (General, Technical, Refund) using GPT-4o Mini via a background job queue
+- **AI classification** — Automatically categorises tickets (General, Technical, Refund) using GPT-5 Nano via a background job queue
 - **AI auto-resolution** — New tickets are assigned to an AI agent that attempts to resolve them from the knowledge base; falls back to the human agent queue if no answer is found
-- **AI response drafting** — Searches a knowledge base semantically and drafts a reply using GPT-4o Mini
+- **AI response drafting** — Searches a knowledge base semantically and drafts a reply using GPT-5 Nano
 - **Human approval workflow** — Agents review and approve AI drafts before any email is sent
 - **Polish feature** — Agents can write a rough reply and have the AI refine the tone and wording
 - **AI summaries** — One-paragraph ticket summaries for fast scanning
@@ -26,7 +26,7 @@ An AI-powered support ticket system for an online programming course business. I
 | Database | PostgreSQL 16 + pgvector |
 | ORM | Prisma 7 |
 | Auth | Better Auth (email/password, database sessions) |
-| AI | OpenAI API via Vercel AI SDK (`gpt-4o-mini`) |
+| AI | OpenAI API via Vercel AI SDK (`gpt-5-nano`) |
 | Queue | pg-boss (PostgreSQL-backed job queue) |
 | Embeddings | @xenova/transformers (local, no API key) |
 | Email | Postmark |
@@ -131,7 +131,7 @@ Incoming email (Postmark webhook)
   pg-boss queues classification job
         │
         ▼
-  Auto-classify category (GPT-4o Mini) → status: PROCESSING
+  Auto-classify category (GPT-5 Nano) → status: PROCESSING
         │
         ▼
   KB semantic search + draft response attempt

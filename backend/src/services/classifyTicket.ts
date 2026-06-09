@@ -22,7 +22,7 @@ const categoryDescriptions: Record<TicketCategoryValue, string> = {
 export async function classifyTicket(ticket: ClassifyTicketInput): Promise<void> {
 	try {
 		const { output } = await generateText({
-			model: openai('gpt-4o-mini'),
+			model: openai('gpt-5-nano'),
 			output: Output.object({ schema: classificationSchema }),
 			prompt: `Classify this customer support ticket into exactly one category:
 

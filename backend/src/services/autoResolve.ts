@@ -25,7 +25,7 @@ export async function autoResolveTicket(ticket: AutoResolveInput): Promise<void>
 	let output: z.infer<typeof autoResolveSchema>;
 	try {
 		({ output } = await generateText({
-			model: openai('gpt-4o-mini'),
+			model: openai('gpt-5-nano'),
 			output: Output.object({ schema: autoResolveSchema }),
 			prompt: `You are a support ticket auto-resolver for an online programming course platform.
 
