@@ -31,6 +31,19 @@ export interface Ticket {
 	assignedAgent: AssignedAgent | null;
 }
 
+export interface TicketStats {
+	totalTickets: number;
+	openTickets: number;
+	resolvedByAI: number;
+	aiResolutionPercent: number;
+	avgResolutionTimeMs: number | null;
+}
+
+export interface DailyTicketCount {
+	date: string;
+	count: number;
+}
+
 export async function getTickets(params?: {
 	status?: string;
 	category?: string;
@@ -73,4 +86,14 @@ export async function createReply(ticketId: number, body: string): Promise<Reply
 	} catch (err) {
 		throw extractError(err, 'Failed to send reply');
 	}
+}
+
+export async function getTicketStats(): Promise<TicketStats> {
+	const { data } = await api.get<TicketStats>('/api/tickets/stats');
+	return data;
+}
+
+export async function getDailyTickets(): Promise<DailyTicketCount[]> {
+	const { data } = await api.get<DailyTicketCount[]>('/api/tickets/daily');
+	return data;
 }

@@ -1,6 +1,7 @@
 import { auth } from './auth';
 import { prisma } from './prisma';
 import { Role } from './generated/prisma/client';
+import { AI_AGENT_EMAIL } from './constants';
 
 const { ADMIN_EMAIL, ADMIN_PASSWORD, AGENT_EMAIL, AGENT_PASSWORD } = process.env;
 
@@ -14,28 +15,50 @@ if (!AGENT_EMAIL || !AGENT_PASSWORD) {
 	process.exit(1);
 }
 
-const adminResult = await auth.api.signUpEmail({
-	body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, name: 'Admin' },
-});
-
-if (adminResult.user) {
-	await prisma.user.update({
-		where: { email: ADMIN_EMAIL },
-		data: { role: Role.ADMIN },
+try {
+	const adminResult = await auth.api.signUpEmail({
+		body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, name: 'Admin' },
 	});
-	console.log('Admin created:', ADMIN_EMAIL);
-} else {
+	if (adminResult.user) {
+		await prisma.user.update({
+			where: { email: ADMIN_EMAIL },
+			data: { role: Role.ADMIN },
+		});
+		console.log('Admin created:', ADMIN_EMAIL);
+	}
+} catch {
 	console.log('Admin may already exist, skipping.');
 }
 
-const agentResult = await auth.api.signUpEmail({
-	body: { email: AGENT_EMAIL, password: AGENT_PASSWORD, name: 'Agent' },
-});
-
-if (agentResult.user) {
-	console.log('Agent created:', AGENT_EMAIL);
-} else {
+try {
+	const agentResult = await auth.api.signUpEmail({
+		body: { email: AGENT_EMAIL, password: AGENT_PASSWORD, name: 'Agent' },
+	});
+	if (agentResult.user) {
+		console.log('Agent created:', AGENT_EMAIL);
+	}
+} catch {
 	console.log('Agent may already exist, skipping.');
+}
+
+const existingAI = await prisma.user.findUnique({ where: { email: AI_AGENT_EMAIL } });
+if (!existingAI) {
+	const now = new Date();
+	await prisma.user.create({
+		data: {
+			id: crypto.randomUUID(),
+			name: 'AI',
+			email: AI_AGENT_EMAIL,
+			emailVerified: true,
+			role: Role.AGENT,
+			isActive: true,
+			createdAt: now,
+			updatedAt: now,
+		},
+	});
+	console.log('AI agent created:', AI_AGENT_EMAIL);
+} else {
+	console.log('AI agent may already exist, skipping.');
 }
 
 await prisma.$disconnect();

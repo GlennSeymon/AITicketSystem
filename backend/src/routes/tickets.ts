@@ -10,6 +10,28 @@ import {
 	TicketCategory,
 	TicketStatus,
 } from '../generated/prisma/client';
+import { AI_AGENT_EMAIL } from '../constants';
+
+interface StatsResponse {
+	totalTickets: number;
+	openTickets: number;
+	resolvedByAI: number;
+	aiResolutionPercent: number;
+	avgResolutionTimeMs: number | null;
+}
+
+interface DailyCount {
+	date: string;
+	count: number;
+}
+
+interface StatsRow {
+	total_tickets: bigint;
+	open_tickets: bigint;
+	resolved_by_ai: bigint;
+	ai_resolution_pct: string;
+	avg_resolution_ms: number | null;
+}
 
 const router = Router();
 
@@ -113,6 +135,52 @@ router.post(
 );
 
 router.get(
+	'/daily',
+	asyncHandler(async (_req, res) => {
+		const rows = await prisma.$queryRaw<{ date: string; count: number }[]>`
+			SELECT
+				TO_CHAR(DATE_TRUNC('day', "createdAt" AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS date,
+				COUNT(*)::int AS count
+			FROM "ticket"
+			WHERE "createdAt" >= NOW() - INTERVAL '30 days'
+			GROUP BY DATE_TRUNC('day', "createdAt" AT TIME ZONE 'UTC')
+			ORDER BY date ASC
+		`;
+
+		const countByDate = new Map(rows.map((r) => [r.date, r.count]));
+
+		const result: DailyCount[] = [];
+		for (let i = 29; i >= 0; i--) {
+			const d = new Date();
+			d.setUTCHours(0, 0, 0, 0);
+			d.setUTCDate(d.getUTCDate() - i);
+			const key = d.toISOString().slice(0, 10);
+			result.push({ date: key, count: countByDate.get(key) ?? 0 });
+		}
+
+		res.json(result);
+	}),
+);
+
+router.get(
+	'/stats',
+	asyncHandler(async (_req, res) => {
+		const rows = await prisma.$queryRaw<[StatsRow]>`SELECT * FROM get_ticket_stats(${AI_AGENT_EMAIL})`;
+
+		const row = rows[0];
+		const response: StatsResponse = {
+			totalTickets: Number(row.total_tickets),
+			openTickets: Number(row.open_tickets),
+			resolvedByAI: Number(row.resolved_by_ai),
+			aiResolutionPercent: Number(row.ai_resolution_pct),
+			avgResolutionTimeMs: row.avg_resolution_ms !== null ? Number(row.avg_resolution_ms) : null,
+		};
+
+		res.json(response);
+	}),
+);
+
+router.get(
 	'/:id',
 	asyncHandler(async (req, res) => {
 		const id = parseInt(req.params.id, 10);
@@ -175,6 +243,9 @@ router.patch(
 					...(status !== undefined && { status: status as TicketStatus }),
 					...(category !== undefined && { category: category as TicketCategory | null }),
 					...(assignedAgentId !== undefined && { assignedAgentId }),
+					...((status === TicketStatus.RESOLVED || status === TicketStatus.CLOSED) && {
+						resolvedAt: new Date(),
+					}),
 				},
 				select: TICKET_SELECT,
 			});

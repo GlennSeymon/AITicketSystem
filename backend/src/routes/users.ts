@@ -4,6 +4,7 @@ import { auth } from '../auth';
 import { prisma } from '../prisma';
 import { Role } from '../generated/prisma/client';
 import { asyncHandler } from '../async-handler';
+import { AI_AGENT_EMAIL } from '../constants';
 
 const router = Router();
 
@@ -18,6 +19,7 @@ const USER_SELECT = {
 
 router.get('/', asyncHandler(async (_req, res) => {
 	const users = await prisma.user.findMany({
+		where: { NOT: { email: AI_AGENT_EMAIL } },
 		select: USER_SELECT,
 		orderBy: { createdAt: 'asc' },
 	});

@@ -1,17 +1,19 @@
-import { Typography, styled } from '@mui/material';
+import { Typography } from '@mui/material';
 import { authClient } from '../lib/authClient';
-import { PageContainer } from '../components/layout';
-
-const WelcomeHeading = styled(Typography)({
-	fontWeight: 500,
-});
+import { PageContainer, PageHeader } from '../components/layout';
+import MetricsDashboard from './dashboard/MetricsDashboard';
 
 export default function HomePage() {
 	const { data } = authClient.useSession();
 
 	return (
 		<PageContainer>
-			<WelcomeHeading variant='h5'>Welcome, {data?.user.name}</WelcomeHeading>
+			<PageHeader>
+				<Typography variant='h5' component='h1'>
+					Welcome, {data?.user.name}
+				</Typography>
+			</PageHeader>
+			<MetricsDashboard />
 		</PageContainer>
 	);
 }

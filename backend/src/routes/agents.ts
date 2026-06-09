@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
+import { AI_AGENT_EMAIL } from '../constants';
 
 const router = Router();
 
@@ -8,7 +9,7 @@ router.get(
 	'/',
 	asyncHandler(async (_req, res) => {
 		const agents = await prisma.user.findMany({
-			where: { isActive: true },
+			where: { isActive: true, NOT: { email: AI_AGENT_EMAIL } },
 			select: { id: true, name: true, email: true },
 			orderBy: { name: 'asc' },
 		});

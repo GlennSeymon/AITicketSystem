@@ -46,7 +46,7 @@ Determine:
 		console.error(`[ai] Failed to auto-resolve ticket ${ticket.id}:`, err);
 		await prisma.ticket.update({
 			where: { id: ticket.id },
-			data: { status: TicketStatus.OPEN },
+			data: { status: TicketStatus.OPEN, assignedAgentId: null },
 		});
 		return;
 	}
@@ -63,13 +63,13 @@ Determine:
 			});
 			await tx.ticket.update({
 				where: { id: ticket.id },
-				data: { status: TicketStatus.RESOLVED },
+				data: { status: TicketStatus.RESOLVED, resolvedAt: new Date() },
 			});
 		});
 	} else {
 		await prisma.ticket.update({
 			where: { id: ticket.id },
-			data: { status: TicketStatus.OPEN },
+			data: { status: TicketStatus.OPEN, assignedAgentId: null },
 		});
 	}
 }

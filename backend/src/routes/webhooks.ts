@@ -10,6 +10,7 @@ import {
 	TicketStatus,
 } from '../generated/prisma/client';
 import { boss, Queues } from '../queue';
+import { AI_AGENT_EMAIL } from '../constants';
 
 const router = Router();
 
@@ -64,6 +65,11 @@ router.post(
 			return;
 		}
 
+		const aiAgent = await prisma.user.findFirst({
+			where: { email: AI_AGENT_EMAIL, isActive: true },
+			select: { id: true },
+		});
+
 		const ticket = await prisma.$transaction(async (tx) => {
 			const t = await tx.ticket.create({
 				data: {
@@ -72,7 +78,8 @@ router.post(
 					fromName,
 					body,
 					status: TicketStatus.NEW,
-				category: TicketCategory.UNCATEGORISED,
+					category: TicketCategory.UNCATEGORISED,
+					...(aiAgent && { assignedAgentId: aiAgent.id }),
 				},
 			});
 			await tx.reply.create({
