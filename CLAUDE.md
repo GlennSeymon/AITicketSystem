@@ -13,7 +13,8 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **Database:** PostgreSQL 16 + pgvector (Docker)
 - **ORM:** Prisma 7
 - **Auth:** Better Auth (email/password, database sessions)
-- **AI:** Anthropic Claude API (Haiku for classification/summaries, Sonnet for drafting/polish)
+- **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-4o-mini` for classification
+- **Queue:** pg-boss (PostgreSQL-backed job queue); `backend/src/queue.ts` exports `boss`, `Queues`, and `startQueue()`
 - **Embeddings:** @xenova/transformers — local, no API key required
 - **Email:** Inbound webhook (`POST /api/webhooks/inbound-email`); auth via `x-webhook-secret` header or `?secret=` query param; outbound via Postmark (future)
 
@@ -167,6 +168,8 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - **TypeScript: prefer `interface` over `type` for object shapes** — use `interface` for any plain object contract (API responses, component props, service types). Reserve `type` for unions, intersections, mapped types, and aliases of non-object shapes. `type` is still correct for Zod-inferred types (`type Foo = z.infer<typeof fooSchema>`) and for types derived via utility types (`type UpdateFoo = Partial<Pick<Foo, 'a' | 'b'>>`).
 - **TypeScript: use utility types to avoid repeating fields** — when a request type is a subset or partial of a response type, derive it rather than relisting fields: `interface CreateFoo extends Pick<Foo, 'name' | 'role'> { password: string }` and `type UpdateFoo = Partial<Pick<Foo, 'name' | 'role' | 'isActive'>>`. Write-only fields like `password` must not appear on the response interface — they belong only on the request type.
 - **TypeScript: passwords are write-only** — never include `password` on a response interface (e.g. `User`). It belongs only on the create/update request type.
+- **TypeScript: types at the top** — declare all `type` and `interface` definitions at the top of the file, immediately after imports, before any constants or functions.
+- **TypeScript: no inline type definitions in signatures** — never write `Pick<Foo, 'a' | 'b'>` directly in a function parameter. Extract it to a named `type` first.
 - MUI v9: do not use the `sx` prop for styling. Use `styled()` components instead
 - **Single responsibility for components** — each component should do one thing: display data, own mutations, or control page layout — not all three. Page-level components compose smaller focused components rather than mixing data fetching, editing logic, and layout in one place.
 - **Shared layout components** live in `frontend/src/components/layout.ts` — import `PageContainer` (padded `Container`) and `PageHeader` (flex row, space-between) from there rather than redefining them per page
@@ -183,6 +186,24 @@ The agent handles: auth fixtures, Page Object Models, `data-testid` placement, a
 - **Inline optimistic edit pattern** — For inline-editable fields (Select that fires on change), use a local state variable initialised to `''` and a dedicated `useMutation` per field. Set local state immediately before calling `mutate()`, then derive the displayed value as `mutation.isPending ? localValue : serverValue`. Use separate mutations per field so one field's pending state never masks another field's current value.
 - **Displaying enum values** — Database enums are stored uppercase (`OPEN`, `TECHNICAL`). Display them in title case using `toTitleCase()` from `src/lib/format.ts`. The Select `value` prop stays as the uppercase enum string; only the `MenuItem` label uses title case.
 - **User deletion is a soft delete** — `DELETE /api/users/:id` sets `isActive: false` on the user row rather than removing it. In the same transaction it unassigns all tickets where `assignedAgentId` matches, setting that field to `null`. Never hard-delete a user row.
+
+## Background Jobs (pg-boss)
+
+pg-boss uses a dedicated `pgboss` schema in the same PostgreSQL database. Key files:
+
+- `backend/src/queue.ts` — creates the `PgBoss` instance, exports `boss`, `Queues` (queue name constants), and `startQueue()` which starts pg-boss and registers all workers
+- `startQueue()` is called in the `app.listen()` callback in `index.ts` with `.catch(err => { console.error(...); process.exit(1) })` so startup failures are visible
+
+**Adding a new queue/worker:**
+1. Add a key to the `Queues` object in `queue.ts`
+2. Call `boss.createQueue(Queues.myQueue)` and `boss.work(Queues.myQueue, handler)` inside `startQueue()`
+3. Enqueue jobs with `await boss.send(Queues.myQueue, data)` at the call site
+
+**DB permissions** — pg-boss needs to create its own schema on first run. The `helpdesk` user requires the `CREATE` privilege on the database:
+```sql
+GRANT CREATE ON DATABASE tickets TO helpdesk;
+```
+Run this once via `docker exec` against the dev container if pg-boss fails to start with `permission denied`.
 
 ## Documentation
 

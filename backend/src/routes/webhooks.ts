@@ -3,8 +3,13 @@ import { z } from 'zod';
 import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import { requireWebhookSecret } from '../require-webhook-secret';
-import { ReplyDirection, SenderType, TicketCategory, TicketStatus } from '../generated/prisma/client';
-import { classifyTicket } from '../services/classifyTicket';
+import {
+	ReplyDirection,
+	SenderType,
+	TicketCategory,
+	TicketStatus,
+} from '../generated/prisma/client';
+import { boss, Queues } from '../queue';
 
 const router = Router();
 
@@ -25,51 +30,65 @@ function normalizeSubject(subject: string): string {
 	return s;
 }
 
-router.post('/inbound-email', requireWebhookSecret, asyncHandler(async (req, res) => {
-	const parsed = inboundEmailSchema.safeParse(req.body);
-	if (!parsed.success) {
-		res.status(400).json({ error: parsed.error.issues[0].message });
-		return;
-	}
+router.post(
+	'/inbound-email',
+	requireWebhookSecret,
+	asyncHandler(async (req, res) => {
+		const parsed = inboundEmailSchema.safeParse(req.body);
+		if (!parsed.success) {
+			res.status(400).json({ error: parsed.error.issues[0].message });
+			return;
+		}
 
-	const { fromEmail, fromName, subject, body } = parsed.data;
-	const normalizedSubject = normalizeSubject(subject);
+		const { fromEmail, fromName, subject, body } = parsed.data;
+		const normalizedSubject = normalizeSubject(subject);
 
-	const existing = await prisma.ticket.findFirst({
-		where: {
-			fromEmail,
-			status: TicketStatus.OPEN,
-			subject: { equals: normalizedSubject, mode: 'insensitive' },
-		},
-	});
-
-	if (existing) {
-		await prisma.reply.create({
-			data: { ticketId: existing.id, body, direction: ReplyDirection.INBOUND, senderType: SenderType.CUSTOMER },
-		});
-		res.status(200).json(existing);
-		return;
-	}
-
-	const ticket = await prisma.$transaction(async (tx) => {
-		const t = await tx.ticket.create({
-			data: {
-				subject: normalizedSubject,
+		const existing = await prisma.ticket.findFirst({
+			where: {
 				fromEmail,
-				fromName,
-				body,
-				category: TicketCategory.UNCATEGORISED,
+				status: TicketStatus.OPEN,
+				subject: { equals: normalizedSubject, mode: 'insensitive' },
 			},
 		});
-		await tx.reply.create({
-			data: { ticketId: t.id, body, direction: ReplyDirection.INBOUND, senderType: SenderType.CUSTOMER },
+
+		if (existing) {
+			await prisma.reply.create({
+				data: {
+					ticketId: existing.id,
+					body,
+					direction: ReplyDirection.INBOUND,
+					senderType: SenderType.CUSTOMER,
+				},
+			});
+			res.status(200).json(existing);
+			return;
+		}
+
+		const ticket = await prisma.$transaction(async (tx) => {
+			const t = await tx.ticket.create({
+				data: {
+					subject: normalizedSubject,
+					fromEmail,
+					fromName,
+					body,
+					category: TicketCategory.UNCATEGORISED,
+				},
+			});
+			await tx.reply.create({
+				data: {
+					ticketId: t.id,
+					body,
+					direction: ReplyDirection.INBOUND,
+					senderType: SenderType.CUSTOMER,
+				},
+			});
+			return t;
 		});
-		return t;
-	});
 
-	res.status(201).json(ticket);
+		await boss.send(Queues.classifyTicket, ticket);
 
-	classifyTicket(ticket);
-}));
+		res.status(201).json(ticket);
+	}),
+);
 
 export default router;

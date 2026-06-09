@@ -3,6 +3,7 @@ import type { ErrorRequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth';
+import { boss, startQueue } from './queue';
 import { requireAuth } from './require-auth';
 import { requireAdmin } from './require-admin';
 import usersRouter from './routes/users';
@@ -43,13 +44,33 @@ app.use('/api/webhooks', webhooksRouter);
 
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 	const code = (err as { code?: string })?.code;
-	if (code === 'P2002') return void res.status(409).json({ error: 'Email already in use' });
-	if (code === 'P2025') return void res.status(404).json({ error: 'Not found' });
+	if (code === 'P2002')
+		return void res.status(409).json({ error: 'Email already in use' });
+	if (code === 'P2025')
+		return void res.status(404).json({ error: 'Not found' });
 	console.error(err);
 	res.status(500).json({ error: 'Internal server error' });
 };
 app.use(errorHandler);
 
-app.listen(port, () => {
-	console.log(`Backend running on http://localhost:${port}`);
+async function boot() {
+	const server = app.listen(port, () => {
+		console.log(`Backend running on http://localhost:${port}`);
+	});
+
+	await startQueue();
+
+	const shutdown = async () => {
+		server.close();
+		await boss.stop();
+		process.exit(0);
+	};
+
+	process.on('SIGTERM', shutdown);
+	process.on('SIGINT', shutdown);
+}
+
+boot().catch((err) => {
+	console.error('[boot] Failed to start:', err);
+	process.exit(1);
 });

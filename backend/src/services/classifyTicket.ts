@@ -3,13 +3,14 @@ import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { ticketCategoryEnum } from '@repo/core';
 import { prisma } from '../prisma';
-import { TicketCategory, Ticket } from '../generated/prisma/client';
+import { Ticket, TicketCategory } from '../generated/prisma/client';
+
+type TicketCategoryValue = z.infer<typeof ticketCategoryEnum>;
+type ClassifyTicketInput = Pick<Ticket, 'id' | 'subject' | 'body'>;
 
 const classificationSchema = z.object({
 	category: ticketCategoryEnum,
 });
-
-type TicketCategoryValue = z.infer<typeof ticketCategoryEnum>;
 
 const categoryDescriptions: Record<TicketCategoryValue, string> = {
 	TECHNICAL: 'issues requiring technical expertise: bugs, error messages, software setup and installation, configuration problems, code questions, tool or environment troubleshooting, video playback failures',
@@ -18,7 +19,7 @@ const categoryDescriptions: Record<TicketCategoryValue, string> = {
 	UNCATEGORISED: 'unclear or ambiguous content that does not fit any other category',
 };
 
-export async function classifyTicket(ticket: Ticket): Promise<void> {
+export async function classifyTicket(ticket: ClassifyTicketInput): Promise<void> {
 	try {
 		const { object } = await generateObject({
 			model: openai('gpt-4o-mini'),
