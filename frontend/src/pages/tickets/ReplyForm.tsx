@@ -98,7 +98,7 @@ export function ReplyForm({ ticketId, customerName, assigneeName }: ReplyFormPro
 						type='button'
 						variant='outlined'
 						onClick={handlePolish}
-						disabled={isPolishing || mutation.isPending}
+						disabled={!body?.trim() || isPolishing || mutation.isPending}
 					>
 						{isPolishing ? 'Polishing...' : 'Polish'}
 					</Button>
