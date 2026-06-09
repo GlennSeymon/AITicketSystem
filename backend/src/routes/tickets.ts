@@ -59,7 +59,9 @@ router.get(
 			: DEFAULT_PAGE_SIZE;
 
 		const where = {
-			...(status && { status: status as TicketStatus }),
+			status: status
+				? (status as TicketStatus)
+				: { notIn: [TicketStatus.NEW, TicketStatus.PROCESSING] },
 			...(category && { category: category as TicketCategory }),
 		};
 

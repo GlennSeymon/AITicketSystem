@@ -1,15 +1,18 @@
 import { PgBoss } from 'pg-boss';
 import { classifyTicket } from './services/classifyTicket';
+import { autoResolveTicket } from './services/autoResolve';
 
 export const boss = new PgBoss({ connectionString: process.env.DATABASE_URL! });
 
 export const Queues = {
 	classifyTicket: 'classify-ticket',
+	autoResolve: 'auto-resolve',
 } as const;
 
 export async function startQueue(): Promise<void> {
 	boss.on('error', (err: Error) => console.error('[queue]', err));
 	await boss.start();
+
 	await boss.createQueue(Queues.classifyTicket);
 	await boss.work<{ id: number; subject: string; body: string }>(
 		Queues.classifyTicket,
@@ -17,5 +20,14 @@ export async function startQueue(): Promise<void> {
 			await classifyTicket(jobs[0].data);
 		},
 	);
+
+	await boss.createQueue(Queues.autoResolve);
+	await boss.work<{ id: number; subject: string; body: string; fromName: string }>(
+		Queues.autoResolve,
+		async (jobs) => {
+			await autoResolveTicket(jobs[0].data);
+		},
+	);
+
 	console.log('[queue] started');
 }

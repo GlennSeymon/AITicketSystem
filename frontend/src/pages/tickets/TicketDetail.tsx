@@ -1,6 +1,6 @@
 import { type Ticket } from '../../services/tickets';
 import { Box, Stack, Typography, styled } from '@mui/material';
-import { formatDate } from '../../lib/format';
+import { formatDateTime } from '../../lib/format';
 
 export const MetaLabel = styled(Typography)(({ theme }) => ({
 	color: theme.palette.text.secondary,
@@ -29,11 +29,11 @@ export function TicketDetail({ ticket }: TicketDetailProps) {
 			</Box>
 			<Box>
 				<MetaLabel>Created</MetaLabel>
-				<MetaValue>{formatDate(ticket.createdAt)}</MetaValue>
+				<MetaValue>{formatDateTime(ticket.createdAt)}</MetaValue>
 			</Box>
 			<Box>
 				<MetaLabel>Updated</MetaLabel>
-				<MetaValue>{formatDate(ticket.updatedAt)}</MetaValue>
+				<MetaValue>{formatDateTime(ticket.updatedAt)}</MetaValue>
 			</Box>
 		</Stack>
 	);

@@ -71,7 +71,8 @@ router.post(
 					fromEmail,
 					fromName,
 					body,
-					category: TicketCategory.UNCATEGORISED,
+					status: TicketStatus.NEW,
+				category: TicketCategory.UNCATEGORISED,
 				},
 			});
 			await tx.reply.create({
@@ -85,7 +86,10 @@ router.post(
 			return t;
 		});
 
-		await boss.send(Queues.classifyTicket, ticket);
+		await Promise.all([
+			boss.send(Queues.classifyTicket, ticket),
+			boss.send(Queues.autoResolve, ticket),
+		]);
 
 		res.status(201).json(ticket);
 	}),

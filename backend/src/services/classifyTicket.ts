@@ -1,4 +1,4 @@
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { ticketCategoryEnum } from '@repo/core';
@@ -21,9 +21,9 @@ const categoryDescriptions: Record<TicketCategoryValue, string> = {
 
 export async function classifyTicket(ticket: ClassifyTicketInput): Promise<void> {
 	try {
-		const { object } = await generateObject({
+		const { output } = await generateText({
 			model: openai('gpt-4o-mini'),
-			schema: classificationSchema,
+			output: Output.object({ schema: classificationSchema }),
 			prompt: `Classify this customer support ticket into exactly one category:
 
 ${ticketCategoryEnum.options.map(cat => `${cat} — ${categoryDescriptions[cat]}`).join('\n')}
@@ -36,7 +36,7 @@ Respond with the single best-matching category.`,
 
 		await prisma.ticket.update({
 			where: { id: ticket.id },
-			data: { category: object.category as TicketCategory },
+			data: { category: output.category as TicketCategory },
 		});
 	} catch (err) {
 		console.error(`[ai] Failed to classify ticket ${ticket.id}:`, err);

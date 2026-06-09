@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ticketStatusEnum = z.enum(['OPEN', 'RESOLVED', 'CLOSED']);
+export const ticketStatusEnum = z.enum(['NEW', 'PROCESSING', 'OPEN', 'RESOLVED', 'CLOSED']);
 export const ticketCategoryEnum = z.enum(['GENERAL', 'TECHNICAL', 'REFUND', 'UNCATEGORISED']);
 export const senderTypeEnum = z.enum(['CUSTOMER', 'AGENT']);
 export const replyDirectionEnum = z.enum(['INBOUND', 'OUTBOUND']);
