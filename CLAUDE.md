@@ -32,7 +32,7 @@ aiTicketSystem/
 │   │   ├── seed.ts           # Dev database seed (admin + agent via Better Auth API)
 │   │   ├── seed.test.ts      # E2E test seed (direct Prisma inserts, pre-seeded sessions)
 │   │   ├── routes/           # Route handlers
-│   │   ├── services/         # ai.ts, email.ts, kb.ts, embeddings.ts
+│   │   ├── services/         # classifyTicket.ts, email.ts, kb.ts, embeddings.ts
 │   │   └── middleware/       # auth, validation
 │   ├── prisma/
 │   │   └── schema.prisma

@@ -4,6 +4,7 @@ import { prisma } from '../prisma';
 import { asyncHandler } from '../async-handler';
 import { requireWebhookSecret } from '../require-webhook-secret';
 import { ReplyDirection, SenderType, TicketCategory, TicketStatus } from '../generated/prisma/client';
+import { classifyTicket } from '../services/classifyTicket';
 
 const router = Router();
 
@@ -57,7 +58,7 @@ router.post('/inbound-email', requireWebhookSecret, asyncHandler(async (req, res
 				fromEmail,
 				fromName,
 				body,
-				category: TicketCategory.GENERAL,
+				category: TicketCategory.UNCATEGORISED,
 			},
 		});
 		await tx.reply.create({
@@ -67,6 +68,8 @@ router.post('/inbound-email', requireWebhookSecret, asyncHandler(async (req, res
 	});
 
 	res.status(201).json(ticket);
+
+	classifyTicket(ticket);
 }));
 
 export default router;
