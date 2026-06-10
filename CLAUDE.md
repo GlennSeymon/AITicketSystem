@@ -16,7 +16,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-5-nano` for all AI tasks (classification, auto-resolution, summarise, polish)
 - **Queue:** pg-boss (PostgreSQL-backed job queue); `backend/src/queue.ts` exports `boss`, `Queues`, and `startQueue()`
 - **Embeddings:** @xenova/transformers — local, no API key required
-- **Email:** Inbound webhook (`POST /api/webhooks/inbound-email`); auth via `x-webhook-secret` header or `?secret=` query param; outbound via Postmark (future)
+- **Email:** Inbound via Brevo inbound parsing → `POST /api/webhooks/inbound-email`; auth via `?secret=` query param (Brevo does not support custom request headers); outbound via Postmark (future)
 
 ## Project Structure
 
@@ -230,6 +230,16 @@ pg-boss uses a dedicated `pgboss` schema in the same PostgreSQL database. Key fi
 GRANT CREATE ON DATABASE tickets TO helpdesk;
 ```
 Run this once via `docker exec` against the dev container if pg-boss fails to start with `permission denied`.
+
+## Inbound Email (Brevo)
+
+Inbound emails are received via Brevo's inbound parsing service. Key details:
+
+- **Receiving domain:** `tickets.superdudes.com.au` (MX records point to `inbound1.sendinblue.com` / `inbound2.sendinblue.com`)
+- **Webhook:** Registered in Brevo via `POST https://api.brevo.com/v3/webhooks` with `"type": "inbound"` and `"domain": "tickets.superdudes.com.au"`
+- **Auth:** Brevo does not support custom request headers — the `WEBHOOK_SECRET` is appended as `?secret=<value>` to the webhook URL when registering
+- **Payload format:** Brevo POSTs `{ items: [{ From: { Address, Name }, Subject, RawTextBody, ExtractedMarkdownMessage, ... }] }` — parsed in `webhooks.ts` via `brevoInboundSchema`
+- **Dev:** The webhook URL uses the ngrok public URL. When ngrok restarts and the URL changes, update the Brevo webhook via `DELETE https://api.brevo.com/v3/webhooks/<id>` then re-register with the new URL
 
 ## Documentation
 

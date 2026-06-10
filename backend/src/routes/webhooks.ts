@@ -14,11 +14,22 @@ import { AI_AGENT_EMAIL } from '../constants';
 
 const router = Router();
 
-const inboundEmailSchema = z.object({
-	fromEmail: z.string().email(),
-	fromName: z.string().min(1),
-	subject: z.string().min(1),
-	body: z.string().min(1),
+const mailboxSchema = z.object({
+	Address: z.string().email(),
+	Name: z.string(),
+});
+
+const brevoInboundSchema = z.object({
+	items: z
+		.array(
+			z.object({
+				From: mailboxSchema,
+				Subject: z.string().min(1),
+				RawTextBody: z.string().optional(),
+				ExtractedMarkdownMessage: z.string().optional(),
+			}),
+		)
+		.min(1),
 });
 
 function normalizeSubject(subject: string): string {
@@ -35,13 +46,17 @@ router.post(
 	'/inbound-email',
 	requireWebhookSecret,
 	asyncHandler(async (req, res) => {
-		const parsed = inboundEmailSchema.safeParse(req.body);
+		const parsed = brevoInboundSchema.safeParse(req.body);
 		if (!parsed.success) {
 			res.status(400).json({ error: parsed.error.issues[0].message });
 			return;
 		}
 
-		const { fromEmail, fromName, subject, body } = parsed.data;
+		const item = parsed.data.items[0];
+		const fromEmail = item.From.Address;
+		const fromName = item.From.Name || fromEmail;
+		const subject = item.Subject;
+		const body = item.RawTextBody || item.ExtractedMarkdownMessage || '';
 		const normalizedSubject = normalizeSubject(subject);
 
 		const existing = await prisma.ticket.findFirst({
