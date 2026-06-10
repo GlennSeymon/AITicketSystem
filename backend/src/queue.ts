@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { PgBoss } from 'pg-boss';
 import { classifyTicket } from './services/classifyTicket';
 import { autoResolveTicket } from './services/autoResolve';
@@ -12,7 +13,7 @@ export const Queues = {
 } as const;
 
 export async function startQueue(): Promise<void> {
-	boss.on('error', (err: Error) => console.error('[queue]', err));
+	boss.on('error', (err: Error) => Sentry.captureException(err));
 	await boss.start();
 
 	await boss.createQueue(Queues.classifyTicket);
@@ -43,5 +44,5 @@ export async function startQueue(): Promise<void> {
 		},
 	);
 
-	console.log('[queue] started');
+	Sentry.captureMessage('[queue] started', 'info');
 }

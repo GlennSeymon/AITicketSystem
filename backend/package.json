@@ -1,8 +1,8 @@
 {
   "name": "backend",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun src/index.ts",
+    "dev": "bun --watch --preload ./src/instrument.ts src/index.ts",
+    "start": "bun --preload ./src/instrument.ts src/index.ts",
     "db:migrate": "bunx prisma migrate dev",
     "db:seed": "bun src/seed.ts"
   },
@@ -11,6 +11,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@repo/core": "workspace:*",
+    "@sentry/node": "^10.57.0",
     "ai": "^6.0.198",
     "better-auth": "^1.6.13",
     "dotenv": "^17.4.2",

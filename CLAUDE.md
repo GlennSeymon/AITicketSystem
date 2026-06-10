@@ -16,7 +16,8 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-5-nano` for all AI tasks (classification, auto-resolution, summarise, polish)
 - **Queue:** pg-boss (PostgreSQL-backed job queue); `backend/src/queue.ts` exports `boss`, `Queues`, and `startQueue()`
 - **Embeddings:** @xenova/transformers — local, no API key required
-- **Email:** Inbound via Brevo inbound parsing → `POST /api/webhooks/inbound-email`; auth via `?secret=` query param (Brevo does not support custom request headers); outbound via Postmark (future)
+- **Email:** Inbound via Brevo inbound parsing → `POST /api/webhooks/inbound-email`; auth via `?secret=` query param (Brevo does not support custom request headers); outbound via Brevo SMTP relay (nodemailer) dispatched as a pg-boss background job (`Queues.sendEmail`)
+- **Error tracking:** Sentry (`@sentry/node` backend, `@sentry/react` frontend); events proxied through `/api/sentry-tunnel` to bypass ad blockers
 
 ## Project Structure
 
@@ -107,8 +108,10 @@ Better Auth handles all auth. Key files:
 **Middleware mounting order in `index.ts` (must not change):**
 1. Auth rate limiter (`/api/auth/sign-in`, 10 req/15 min) — **production only** (`NODE_ENV === 'production'`)
 2. Better Auth handler (`/api/auth/*`)
-3. `express.json({ limit: '100kb' })`
-4. All other routes (`/api/tickets`, `/api/webhooks`, `/api/users`, …)
+3. Sentry tunnel (`/api/sentry-tunnel`) — **must come before `express.json()`** so the raw body stream is untouched
+4. `express.json({ limit: '100kb' })`
+5. All other routes (`/api/tickets`, `/api/webhooks`, `/api/users`, …)
+6. `Sentry.setupExpressErrorHandler(app)` — after all routes, before custom error handler
 
 **Frontend wiring:**
 - Session state: `const { data, isPending } = authClient.useSession()`
@@ -241,6 +244,33 @@ Inbound emails are received via Brevo's inbound parsing service. Key details:
 - **Payload format:** Brevo POSTs `{ items: [{ From: { Address, Name }, Subject, RawTextBody, ExtractedMarkdownMessage, ... }] }` — parsed in `webhooks.ts` via `brevoInboundSchema`
 - **Dev:** The webhook URL uses the ngrok public URL. When ngrok restarts and the URL changes, update the Brevo webhook via `DELETE https://api.brevo.com/v3/webhooks/<id>` then re-register with the new URL
 
+## Sentry Error Tracking
+
+Sentry is configured on both frontend and backend with a tunnel to bypass ad blockers.
+
+**Backend (`@sentry/node`):**
+- Initialized in `backend/src/instrument.ts` — loaded via `--preload ./src/instrument.ts` in the `dev` and `start` scripts so it runs before any other module
+- `Sentry.setupExpressErrorHandler(app)` is called after all routes in `index.ts`; it captures unhandled Express errors automatically — do not call `Sentry.captureException` again in the custom error handler beneath it (would double-capture)
+- DSN in `SENTRY_DSN`; environment tag in `SENTRY_ENVIRONMENT`
+
+**Frontend (`@sentry/react`):**
+- Initialized in `frontend/src/instrument.ts` — imported as the very first line of `main.tsx`
+- `<Sentry.ErrorBoundary>` wraps the app in `main.tsx`
+- All events are routed through `tunnel: '/api/sentry-tunnel'` to avoid ad-blocker blocks
+- DSN in `VITE_SENTRY_DSN`; environment tag in `VITE_SENTRY_ENVIRONMENT`
+
+**Sentry tunnel (`backend/src/routes/sentry-tunnel.ts`):**
+- Mounted before `express.json()` so body-parser does not consume the stream
+- Reads the raw body via `req.on('data')` / `req.on('end')` — no body-parser middleware
+- Validates the DSN hostname ends with `.sentry.io` before forwarding
+- Envelopes without a DSN (sessions, client reports) are silently accepted with 200 — never call `Sentry.captureException` inside this handler (infinite loop)
+
+**Logging conventions:**
+- Errors / exceptions (catch blocks, unexpected failures): `Sentry.captureException(err)` — pass `{ extra: { ... } }` as second arg for context (e.g. `{ extra: { ticketId } }`)
+- Warnings (misconfiguration, degraded operation): `Sentry.captureMessage(msg, 'warning')`
+- Informational events (startup, queue ready): `Sentry.captureMessage(msg, 'info')`
+- **Exception:** `sentry-tunnel.ts` must use `console.error` only — never Sentry
+
 ## Documentation
 
 **Always fetch context7 docs before writing any library code.** Do not rely on training data — APIs change between major versions and training data is often stale. This is a required step, not optional.
@@ -275,4 +305,21 @@ AGENT_PASSWORD="..."
 PORT=3001
 WEBHOOK_SECRET="..."
 OPENAI_API_KEY="..."
+
+# Brevo SMTP (outbound email)
+BREVO_SMTP_HOST="smtp-relay.brevo.com"
+BREVO_SMTP_PORT="587"
+BREVO_SMTP_USER="..."
+BREVO_SMTP_PASS="..."
+BREVO_FROM_EMAIL="support@tickets.superdudes.com.au"
+
+# Sentry (backend)
+SENTRY_DSN="..."
+SENTRY_ENVIRONMENT="development"
+```
+
+Frontend env vars go in `frontend/.env`:
+```
+VITE_SENTRY_DSN="..."
+VITE_SENTRY_ENVIRONMENT="development"
 ```

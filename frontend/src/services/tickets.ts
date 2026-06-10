@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import api, { extractError } from '../lib/api';
 import type { CreateTicketInput, UpdateTicketInput } from '@repo/core';
 
@@ -61,6 +62,7 @@ export async function createTicket(data: CreateTicketInput): Promise<Ticket> {
 		const { data: ticket } = await api.post<Ticket>('/api/tickets', data);
 		return ticket;
 	} catch (err) {
+		Sentry.captureException(err);
 		throw extractError(err, 'Failed to create ticket');
 	}
 }
@@ -75,6 +77,7 @@ export async function updateTicket(id: number, data: UpdateTicketInput): Promise
 		const { data: ticket } = await api.patch<Ticket>(`/api/tickets/${id}`, data);
 		return ticket;
 	} catch (err) {
+		Sentry.captureException(err);
 		throw extractError(err, 'Failed to update ticket');
 	}
 }
@@ -84,6 +87,7 @@ export async function createReply(ticketId: number, body: string): Promise<Reply
 		const { data } = await api.post<Reply>(`/api/tickets/${ticketId}/replies`, { body });
 		return data;
 	} catch (err) {
+		Sentry.captureException(err);
 		throw extractError(err, 'Failed to send reply');
 	}
 }

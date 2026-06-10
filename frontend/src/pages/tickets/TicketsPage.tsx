@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getTickets, type Ticket } from '../../services/tickets';
-import { TicketStatus, TicketCategory, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '@repo/core';
+import {
+	TicketStatus,
+	TicketCategory,
+	PAGE_SIZE_OPTIONS,
+	DEFAULT_PAGE_SIZE,
+} from '@repo/core';
 import {
 	Alert,
 	Button,

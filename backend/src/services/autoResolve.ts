@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { generateText, Output } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -53,7 +54,7 @@ Determine:
 3. reply: If canResolve is true and escalate is false, write a professional reply addressing the customer by name. End the reply with this exact signature on its own line:\n\nSupport Team\nhttps://ticketsystem.com\n\nOtherwise leave this empty.`,
 		}));
 	} catch (err) {
-		console.error(`[ai] Failed to auto-resolve ticket ${ticket.id}:`, err);
+		Sentry.captureException(err, { extra: { ticketId: ticket.id } });
 		await prisma.ticket.update({
 			where: { id: ticket.id },
 			data: { status: TicketStatus.OPEN, assignedAgentId: null },

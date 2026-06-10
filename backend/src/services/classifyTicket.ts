@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import { generateText, Output } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -39,6 +40,6 @@ Respond with the single best-matching category.`,
 			data: { category: output.category as TicketCategory },
 		});
 	} catch (err) {
-		console.error(`[ai] Failed to classify ticket ${ticket.id}:`, err);
+		Sentry.captureException(err, { extra: { ticketId: ticket.id } });
 	}
 }

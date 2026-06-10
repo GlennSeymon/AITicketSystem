@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import nodemailer from 'nodemailer';
 
 const {
@@ -22,7 +23,7 @@ function createTransporter() {
 export async function sendEmail(to: string, subject: string, body: string): Promise<void> {
 	const transporter = createTransporter();
 	if (!transporter) {
-		console.warn('[email] BREVO_SMTP_USER, BREVO_SMTP_PASS, or BREVO_FROM_EMAIL not set — skipping outbound email');
+		Sentry.captureMessage('[email] BREVO_SMTP_USER, BREVO_SMTP_PASS, or BREVO_FROM_EMAIL not set — skipping outbound email', 'warning');
 		return;
 	}
 	await transporter.sendMail({ from: BREVO_FROM_EMAIL, to, subject, text: body });

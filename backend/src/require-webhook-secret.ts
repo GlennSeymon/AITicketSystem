@@ -1,7 +1,8 @@
+import * as Sentry from '@sentry/node';
 import type { RequestHandler } from 'express';
 
 if (!process.env.WEBHOOK_SECRET) {
-	console.warn('WEBHOOK_SECRET is not set — inbound email webhook is unprotected');
+	Sentry.captureMessage('WEBHOOK_SECRET is not set — inbound email webhook is unprotected', 'warning');
 }
 
 export const requireWebhookSecret: RequestHandler = (req, res, next) => {
