@@ -53,7 +53,7 @@ export default function TicketVolumeChart() {
 							});
 						}}
 					/>
-					<Bar dataKey='count' fill='#7c3aed' radius={[3, 3, 0, 0]} />
+					<Bar dataKey='count' fill='#2563eb' radius={[3, 3, 0, 0]} />
 				</BarChart>
 			</ResponsiveContainer>
 		</ChartCard>

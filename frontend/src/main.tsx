@@ -1,4 +1,5 @@
 import './instrument';
+import '@fontsource-variable/geist';
 import { StrictMode } from 'react'
 import * as Sentry from '@sentry/react'
 import { createRoot } from 'react-dom/client'
