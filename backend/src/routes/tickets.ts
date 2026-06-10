@@ -11,6 +11,7 @@ import {
 	TicketStatus,
 } from '../generated/prisma/client';
 import { AI_AGENT_EMAIL } from '../constants';
+import { boss, Queues } from '../queue';
 
 interface StatsResponse {
 	totalTickets: number;
@@ -269,7 +270,7 @@ router.post(
 			return;
 		}
 
-		const ticket = await prisma.ticket.findUnique({ where: { id }, select: { id: true } });
+		const ticket = await prisma.ticket.findUnique({ where: { id }, select: { id: true, fromEmail: true, subject: true } });
 		if (!ticket) {
 			res.status(404).json({ error: 'Not found' });
 			return;
@@ -278,6 +279,8 @@ router.post(
 		const reply = await prisma.reply.create({
 			data: { ticketId: id, body: parsed.data.body, direction: ReplyDirection.OUTBOUND, senderType: SenderType.AGENT, authorId: req.user.id },
 		});
+
+		await boss.send(Queues.sendEmail, { to: ticket.fromEmail, subject: `Re: ${ticket.subject}`, body: parsed.data.body });
 
 		res.status(201).json(reply);
 	}),

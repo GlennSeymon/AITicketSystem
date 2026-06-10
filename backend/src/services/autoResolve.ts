@@ -6,7 +6,17 @@ import { resolve } from 'path';
 import { prisma } from '../prisma';
 import { type Ticket, ReplyDirection, SenderType, TicketStatus } from '../generated/prisma/client';
 
-type AutoResolveInput = Pick<Ticket, 'id' | 'subject' | 'body' | 'fromName'>;
+type AutoResolveInput = Pick<Ticket, 'id' | 'subject' | 'body' | 'fromName' | 'fromEmail'>;
+
+interface EmailPayload {
+	to: string;
+	subject: string;
+	body: string;
+}
+
+interface AutoResolveResult {
+	emailPayload?: EmailPayload;
+}
 
 const autoResolveSchema = z.object({
 	canResolve: z.boolean(),
@@ -16,7 +26,7 @@ const autoResolveSchema = z.object({
 
 const knowledgeBase = readFileSync(resolve(import.meta.dir, '../../knowledge-base.md'), 'utf-8');
 
-export async function autoResolveTicket(ticket: AutoResolveInput): Promise<void> {
+export async function autoResolveTicket(ticket: AutoResolveInput): Promise<AutoResolveResult> {
 	await prisma.ticket.update({
 		where: { id: ticket.id },
 		data: { status: TicketStatus.PROCESSING },
@@ -40,7 +50,7 @@ Message: ${ticket.body}
 Determine:
 1. canResolve: Can this ticket be fully resolved using only the knowledge base above?
 2. escalate: Does this ticket match any escalation rule in section 10 of the knowledge base?
-3. reply: If canResolve is true and escalate is false, write a professional reply addressing the customer by name. Otherwise leave this empty.`,
+3. reply: If canResolve is true and escalate is false, write a professional reply addressing the customer by name. End the reply with this exact signature on its own line:\n\nSupport Team\nhttps://ticketsystem.com\n\nOtherwise leave this empty.`,
 		}));
 	} catch (err) {
 		console.error(`[ai] Failed to auto-resolve ticket ${ticket.id}:`, err);
@@ -48,7 +58,7 @@ Determine:
 			where: { id: ticket.id },
 			data: { status: TicketStatus.OPEN, assignedAgentId: null },
 		});
-		return;
+		return {};
 	}
 
 	if (output.canResolve && !output.escalate && output.reply) {
@@ -66,10 +76,12 @@ Determine:
 				data: { status: TicketStatus.RESOLVED, resolvedAt: new Date() },
 			});
 		});
+		return { emailPayload: { to: ticket.fromEmail, subject: `Re: ${ticket.subject}`, body: output.reply } };
 	} else {
 		await prisma.ticket.update({
 			where: { id: ticket.id },
 			data: { status: TicketStatus.OPEN, assignedAgentId: null },
 		});
+		return {};
 	}
 }
