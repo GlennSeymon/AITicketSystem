@@ -21,7 +21,8 @@ const OutboundBubble = styled(Paper)(({ theme }) => ({
 }));
 
 const ReplyMeta = styled(Typography)(({ theme }) => ({
-	color: theme.palette.text.secondary,
+	color: 'inherit',
+	opacity: 0.7,
 	fontSize: '0.75rem',
 	display: 'block',
 	marginBottom: theme.spacing(0.5),
