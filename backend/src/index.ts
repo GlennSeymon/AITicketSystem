@@ -17,6 +17,8 @@ import sentryTunnelRouter from './routes/sentry-tunnel';
 const app = express();
 const port = process.env.PORT || 3001;
 
+app.set('trust proxy', 1);
+
 // Better Auth must be mounted before express.json()
 if (process.env.NODE_ENV === 'production') {
 	const authLimiter = rateLimit({
