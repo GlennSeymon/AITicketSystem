@@ -15,31 +15,46 @@ if (!AGENT_EMAIL || !AGENT_PASSWORD) {
 	process.exit(1);
 }
 
-try {
-	const adminResult = await auth.api.signUpEmail({
-		body: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, name: 'Admin' },
-	});
-	if (adminResult.user) {
-		await prisma.user.update({
-			where: { email: ADMIN_EMAIL },
-			data: { role: Role.ADMIN },
-		});
-		console.log('Admin created:', ADMIN_EMAIL);
+const ctx = await auth.$context;
+
+async function upsertUser(
+	email: string,
+	password: string,
+	name: string,
+	role: Role,
+): Promise<void> {
+	const existing = await prisma.user.findUnique({ where: { email } });
+	if (existing) {
+		console.log(`${name} already exists, skipping.`);
+		return;
 	}
-} catch {
-	console.log('Admin may already exist, skipping.');
+
+	const hashed = await ctx.password.hash(password);
+	const now = new Date();
+	const id = crypto.randomUUID();
+
+	await prisma.$transaction([
+		prisma.user.create({
+			data: { id, name, email, emailVerified: true, role, isActive: true, createdAt: now, updatedAt: now },
+		}),
+		prisma.account.create({
+			data: {
+				id: crypto.randomUUID(),
+				accountId: id,
+				providerId: 'credential',
+				userId: id,
+				password: hashed,
+				createdAt: now,
+				updatedAt: now,
+			},
+		}),
+	]);
+
+	console.log(`${name} created:`, email);
 }
 
-try {
-	const agentResult = await auth.api.signUpEmail({
-		body: { email: AGENT_EMAIL, password: AGENT_PASSWORD, name: 'Agent' },
-	});
-	if (agentResult.user) {
-		console.log('Agent created:', AGENT_EMAIL);
-	}
-} catch {
-	console.log('Agent may already exist, skipping.');
-}
+await upsertUser(ADMIN_EMAIL, ADMIN_PASSWORD, 'Admin', Role.ADMIN);
+await upsertUser(AGENT_EMAIL, AGENT_PASSWORD, 'Agent', Role.AGENT);
 
 const existingAI = await prisma.user.findUnique({ where: { email: AI_AGENT_EMAIL } });
 if (!existingAI) {
@@ -58,7 +73,7 @@ if (!existingAI) {
 	});
 	console.log('AI agent created:', AI_AGENT_EMAIL);
 } else {
-	console.log('AI agent may already exist, skipping.');
+	console.log('AI agent already exists, skipping.');
 }
 
 await prisma.$disconnect();
