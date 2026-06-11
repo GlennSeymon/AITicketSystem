@@ -9,7 +9,7 @@ const SummaryWrapper = styled('div')(({ theme }) => ({
 const SummaryBox = styled(Paper)(({ theme }) => ({
 	padding: theme.spacing(2),
 	marginTop: theme.spacing(1),
-	backgroundColor: theme.palette.grey[50],
+	backgroundColor: theme.palette.action.hover,
 }));
 
 interface TicketSummaryProps {
