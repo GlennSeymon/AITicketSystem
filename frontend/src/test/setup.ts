@@ -20,7 +20,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // MUI uses ResizeObserver for layout calculations (TextareaAutosize calls `new ResizeObserver(...)`)
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();

@@ -27,7 +27,7 @@ describe('ReplyForm', () => {
 			complete: mockComplete,
 			completion: '',
 			isLoading: false,
-		} as ReturnType<typeof useCompletion>);
+		} as unknown as ReturnType<typeof useCompletion>);
 		vi.mocked(createReply).mockResolvedValue(undefined as never);
 	});
 
@@ -97,7 +97,7 @@ describe('ReplyForm', () => {
 				complete: mockComplete,
 				completion: 'Streamed text so far...',
 				isLoading: true,
-			} as ReturnType<typeof useCompletion>);
+			} as unknown as ReturnType<typeof useCompletion>);
 		});
 
 		it('shows "Polishing..." on the Polish button', () => {
@@ -124,7 +124,7 @@ describe('ReplyForm', () => {
 	describe('onFinish callback', () => {
 		it('updates the textarea with the polished text when streaming completes', () => {
 			renderWithProviders(<ReplyForm {...defaultProps} />);
-			const { onFinish } = vi.mocked(useCompletion).mock.calls[0][0];
+			const { onFinish } = vi.mocked(useCompletion).mock.calls[0]![0]!;
 			act(() => {
 				onFinish!('original draft', 'Polished reply text.');
 			});

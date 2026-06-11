@@ -37,6 +37,7 @@ const mockTicket: Ticket = {
 		{
 			id: 'msg-1',
 			body: 'I cannot access module 3.',
+			bodyHTML: null,
 			direction: 'INBOUND',
 			senderType: 'CUSTOMER',
 			author: null,
@@ -62,6 +63,7 @@ const mockTicketResponse: Ticket = {
 const mockReply: Reply = {
 	id: 'msg-2',
 	body: 'We are looking into this.',
+	bodyHTML: null,
 	direction: 'OUTBOUND',
 	senderType: 'AGENT',
 	author: { id: 'agent-1', name: 'Agent Alice' },
@@ -160,6 +162,7 @@ describe('TicketDetailPage', () => {
 					{
 						id: 'msg-2',
 						body: 'We are looking into this.',
+						bodyHTML: null,
 						direction: 'OUTBOUND',
 						senderType: 'AGENT',
 						author: { id: 'agent-1', name: 'Agent Alice' },
@@ -179,6 +182,7 @@ describe('TicketDetailPage', () => {
 					{
 						id: 'msg-2',
 						body: 'We are looking into this.',
+						bodyHTML: null,
 						direction: 'OUTBOUND',
 						senderType: 'AGENT',
 						author: null,

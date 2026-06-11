@@ -141,7 +141,7 @@ export function CreateTicketDialog({
 										labelId='category-label'
 										id='category-select'
 										value={value ?? ''}
-										onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
+										onChange={(e) => onChange((e.target.value as string) === '' ? undefined : e.target.value)}
 										label='Category'
 									>
 										<MenuItem value=''><em>None</em></MenuItem>
