@@ -25,7 +25,12 @@ const autoResolveSchema = z.object({
 	reply: z.string(),
 });
 
-const knowledgeBase = readFileSync(resolve(import.meta.dir, '../../knowledge-base.md'), 'utf-8');
+let knowledgeBase = '';
+try {
+	knowledgeBase = readFileSync(resolve(import.meta.dir, '../../knowledge-base.md'), 'utf-8');
+} catch {
+	Sentry.captureMessage('[autoResolve] knowledge-base.md not found — auto-resolution will produce low-quality results', 'warning');
+}
 
 export async function autoResolveTicket(ticket: AutoResolveInput): Promise<AutoResolveResult> {
 	await prisma.ticket.update({
