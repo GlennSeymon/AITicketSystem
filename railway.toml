@@ -2,7 +2,7 @@
 buildCommand = "bun install && bun run --cwd frontend build && cd backend && bunx prisma generate"
 
 [deploy]
-startCommand = "cd backend && bunx prisma migrate deploy && bun --preload ./src/instrument.ts src/index.ts"
+startCommand = "cd backend && bunx prisma migrate resolve --applied 20260609000003_add_get_ticket_stats_fn || true && bunx prisma migrate deploy && bun --preload ./src/instrument.ts src/index.ts"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 
