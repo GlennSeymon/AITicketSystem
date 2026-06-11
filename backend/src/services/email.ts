@@ -1,22 +1,25 @@
-import nodemailer from 'nodemailer';
-
 export async function sendEmail(to: string, subject: string, body: string): Promise<void> {
-	const {
-		BREVO_SMTP_HOST = 'smtp-relay.brevo.com',
-		BREVO_SMTP_PORT = '587',
-		BREVO_SMTP_USER,
-		BREVO_SMTP_PASS,
-		BREVO_FROM_EMAIL,
-	} = process.env;
+	const { BREVO_API_KEY, BREVO_FROM_EMAIL } = process.env;
 
-	if (!BREVO_SMTP_USER) throw new Error('[email] BREVO_SMTP_USER not set');
-	if (!BREVO_SMTP_PASS) throw new Error('[email] BREVO_SMTP_PASS not set');
+	if (!BREVO_API_KEY) throw new Error('[email] BREVO_API_KEY not set');
 	if (!BREVO_FROM_EMAIL) throw new Error('[email] BREVO_FROM_EMAIL not set');
 
-	const transporter = nodemailer.createTransport({
-		host: BREVO_SMTP_HOST,
-		port: parseInt(BREVO_SMTP_PORT, 10),
-		auth: { user: BREVO_SMTP_USER, pass: BREVO_SMTP_PASS },
+	const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+		method: 'POST',
+		headers: {
+			'api-key': BREVO_API_KEY,
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			sender: { email: BREVO_FROM_EMAIL },
+			to: [{ email: to }],
+			subject,
+			textContent: body,
+		}),
 	});
-	await transporter.sendMail({ from: BREVO_FROM_EMAIL, to, subject, text: body });
+
+	if (!res.ok) {
+		const detail = await res.text();
+		throw new Error(`[email] Brevo API error ${res.status}: ${detail}`);
+	}
 }

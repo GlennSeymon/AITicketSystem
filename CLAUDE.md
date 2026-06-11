@@ -16,7 +16,7 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 - **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-5-nano` for all AI tasks (classification, auto-resolution, summarise, polish)
 - **Queue:** pg-boss (PostgreSQL-backed job queue); `backend/src/queue.ts` exports `boss`, `Queues`, and `startQueue()`
 - **Embeddings:** @xenova/transformers — local, no API key required
-- **Email:** Inbound via Brevo inbound parsing → `POST /api/webhooks/inbound-email`; auth via `?secret=` query param (Brevo does not support custom request headers); outbound via Brevo SMTP relay (nodemailer) dispatched as a pg-boss background job (`Queues.sendEmail`)
+- **Email:** Inbound via Brevo inbound parsing → `POST /api/webhooks/inbound-email`; auth via `?secret=` query param (Brevo does not support custom request headers); outbound via Brevo transactional email HTTP API (`POST https://api.brevo.com/v3/smtp/email`) dispatched as a pg-boss background job (`Queues.sendEmail`) — SMTP is not used (Railway blocks outbound port 587)
 - **Error tracking:** Sentry (`@sentry/node` backend, `@sentry/react` frontend); events proxied through `/api/sentry-tunnel` to bypass ad blockers
 
 ## Project Structure
@@ -307,11 +307,8 @@ PORT=3001
 WEBHOOK_SECRET="..."
 OPENAI_API_KEY="..."
 
-# Brevo SMTP (outbound email)
-BREVO_SMTP_HOST="smtp-relay.brevo.com"
-BREVO_SMTP_PORT="587"
-BREVO_SMTP_USER="..."
-BREVO_SMTP_PASS="..."
+# Brevo (outbound email via HTTP API — SMTP blocked by Railway)
+BREVO_API_KEY="..."
 BREVO_FROM_EMAIL="support@tickets.superdudes.com.au"
 
 # Sentry (backend)
