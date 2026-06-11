@@ -7,9 +7,11 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 
 [variables]
-NODE_ENV                = "production"
-SENTRY_ENVIRONMENT      = "production"
-VITE_SENTRY_ENVIRONMENT = "production"
-BREVO_SMTP_HOST         = "smtp-relay.brevo.com"
-BREVO_SMTP_PORT         = "587"
-BREVO_FROM_EMAIL        = "support@tickets.superdudes.com.au"
+NODE_ENV                    = "production"
+SENTRY_ENVIRONMENT          = "production"
+VITE_SENTRY_ENVIRONMENT     = "production"
+BREVO_SMTP_HOST             = "smtp-relay.brevo.com"
+BREVO_SMTP_PORT             = "587"
+BREVO_FROM_EMAIL            = "support@tickets.superdudes.com.au"
+BETTER_AUTH_URL             = "https://${{RAILWAY_PUBLIC_DOMAIN}}"
+BETTER_AUTH_TRUSTED_ORIGINS = "https://${{RAILWAY_PUBLIC_DOMAIN}}"
