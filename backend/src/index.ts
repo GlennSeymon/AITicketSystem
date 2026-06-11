@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/node';
 import express from 'express';
+import path from 'path';
 import type { ErrorRequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
 import { toNodeHandler } from 'better-auth/node';
@@ -45,6 +46,14 @@ app.use('/api/users', requireAuth, requireAdmin, usersRouter);
 app.use('/api/agents', requireAuth, agentsRouter);
 app.use('/api/tickets', requireAuth, ticketsRouter);
 app.use('/api/webhooks', webhooksRouter);
+
+if (process.env.NODE_ENV === 'production') {
+	const frontendDist = path.resolve(import.meta.dir, '../../frontend/dist');
+	app.use(express.static(frontendDist));
+	app.get('*', (_req, res) => {
+		res.sendFile(path.join(frontendDist, 'index.html'));
+	});
+}
 
 Sentry.setupExpressErrorHandler(app);
 

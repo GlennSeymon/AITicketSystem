@@ -1,0 +1,15 @@
+[build]
+buildCommand = "bun install && bun run --cwd frontend build && cd backend && bunx prisma generate"
+
+[deploy]
+startCommand = "cd backend && bunx prisma migrate deploy && bun --preload ./src/instrument.ts src/index.ts"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 60
+
+[variables]
+NODE_ENV                = "production"
+SENTRY_ENVIRONMENT      = "production"
+VITE_SENTRY_ENVIRONMENT = "production"
+BREVO_SMTP_HOST         = "smtp-relay.brevo.com"
+BREVO_SMTP_PORT         = "587"
+BREVO_FROM_EMAIL        = "support@tickets.superdudes.com.au"
