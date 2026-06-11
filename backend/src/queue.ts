@@ -40,7 +40,12 @@ export async function startQueue(): Promise<void> {
 		Queues.sendEmail,
 		async (jobs) => {
 			const { to, subject, body } = jobs[0].data;
-			await sendEmail(to, subject, body);
+			try {
+				await sendEmail(to, subject, body);
+			} catch (err) {
+				Sentry.captureException(err, { extra: { to, subject } });
+				throw err;
+			}
 		},
 	);
 
