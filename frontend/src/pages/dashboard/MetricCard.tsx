@@ -28,7 +28,7 @@ const Label = styled(Typography)(({ theme }) => ({
 
 const Value = styled(Typography)(({ theme }) => ({
 	fontWeight: 700,
-	fontSize: '2.25rem',
+	fontSize: '1.75rem',
 	lineHeight: 1.1,
 	color: theme.palette.text.primary,
 	letterSpacing: '-0.03em',
