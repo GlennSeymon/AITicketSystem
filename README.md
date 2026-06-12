@@ -32,6 +32,23 @@ An AI-powered support ticket system for an online programming course business. I
 | Email | Brevo (inbound parsing + transactional HTTP API) |
 | Error tracking | Sentry (frontend + backend, proxied tunnel) |
 
+## Screenshots
+
+![Login](screenshots/AITicketSystem-Login.jpg)
+*Sign-in page*
+
+![Dashboard](screenshots/AITicketSystem-Dashboard.jpg)
+*Metrics dashboard — total tickets, open tickets, AI resolution rate, average resolution time, and a 30-day volume chart*
+
+![Ticket list](screenshots/AITicketSystem-TicketList.jpg)
+*Ticket queue with status and category filters*
+
+![Create ticket](screenshots/AITicketSystem-TicketCreate.jpg)
+*Manually create a ticket*
+
+![Ticket detail](screenshots/AITicketSystem-TicketDetail.jpg)
+*Ticket detail — view replies, AI-draft a response, summarise, and polish before sending*
+
 ## Prerequisites
 
 - [Bun](https://bun.sh) >= 1.0
