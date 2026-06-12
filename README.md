@@ -6,37 +6,39 @@ An AI-powered support ticket system for an online programming course business. I
 
 ## Features
 
-- **Email ingestion** — Receives support emails via Postmark webhooks and creates tickets
+- **Email ingestion** — Receives support emails via Brevo inbound parsing and creates tickets
 - **AI classification** — Automatically categorises tickets (General, Technical, Refund) using GPT-5 Nano via a background job queue
 - **AI auto-resolution** — New tickets are assigned to an AI agent that attempts to resolve them from the knowledge base; falls back to the human agent queue if no answer is found
-- **AI response drafting** — Searches a knowledge base semantically and drafts a reply using GPT-5 Nano
+- **AI response drafting** — Drafts a reply from the knowledge base using GPT-5 Nano
 - **Human approval workflow** — Agents review and approve AI drafts before any email is sent
-- **Polish feature** — Agents can write a rough reply and have the AI refine the tone and wording
-- **AI summaries** — One-paragraph ticket summaries for fast scanning
-- **Knowledge base management** — Admins build and maintain KB articles; semantic search powered by local embeddings
+- **Polish feature** — Agents can write a rough reply and have the AI refine the tone and wording (streamed live)
+- **AI summaries** — On-demand one-paragraph ticket summaries for fast scanning (streamed live)
+- **Knowledge base** — Markdown file (`backend/knowledge-base.md`) that the AI reads to resolve and draft responses
 - **User management** — Admin creates and manages agent accounts
 - **Metrics dashboard** — Total tickets, open tickets, AI resolution rate, average resolution time, and a 30-day ticket volume chart
+- **Dark mode** — Light/dark theme toggle persisted to `localStorage`
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite + MUI v9 |
+| Frontend | React 19 + TypeScript + Vite + MUI v9 + React Router 7 |
 | Backend | Express + TypeScript + Bun |
-| Database | PostgreSQL 16 + pgvector |
+| Database | PostgreSQL 16 + pgvector extension |
 | ORM | Prisma 7 |
 | Auth | Better Auth (email/password, database sessions) |
 | AI | OpenAI API via Vercel AI SDK (`gpt-5-nano`) |
 | Queue | pg-boss (PostgreSQL-backed job queue) |
-| Embeddings | @xenova/transformers (local, no API key) |
-| Email | Postmark |
+| Email | Brevo (inbound parsing + transactional HTTP API) |
+| Error tracking | Sentry (frontend + backend, proxied tunnel) |
 
 ## Prerequisites
 
 - [Bun](https://bun.sh) >= 1.0
 - [Docker](https://www.docker.com) (for PostgreSQL)
 - OpenAI API key
-- Postmark account (for email ingestion/sending)
+- [Brevo](https://www.brevo.com) account (for inbound email parsing and outbound transactional email)
+- [Sentry](https://sentry.io) project (optional — for error tracking)
 
 ## Getting Started
 
@@ -68,6 +70,17 @@ AGENT_PASSWORD="your-agent-password"
 PORT=3001
 WEBHOOK_SECRET="your-webhook-secret"
 OPENAI_API_KEY="your-openai-key"
+BREVO_API_KEY="your-brevo-api-key"
+BREVO_FROM_EMAIL="support@yourdomain.com"
+SENTRY_DSN="your-sentry-dsn"           # optional
+SENTRY_ENVIRONMENT="development"       # optional
+```
+
+For Sentry frontend events, create `frontend/.env`:
+
+```
+VITE_SENTRY_DSN="your-sentry-dsn"        # optional
+VITE_SENTRY_ENVIRONMENT="development"    # optional
 ```
 
 **3. Start the database**
@@ -104,7 +117,7 @@ AITicketSystem/
 │   │   ├── constants.ts      # Shared constants (AI_AGENT_EMAIL, etc.)
 │   │   ├── queue.ts          # pg-boss job queue setup
 │   │   ├── routes/           # API route handlers
-│   │   ├── services/         # classifyTicket, autoResolve, kb, embeddings
+│   │   ├── services/         # classifyTicket, autoResolve, email
 │   │   └── middleware/       # Auth, validation
 │   ├── prisma/
 │   │   └── schema.prisma
@@ -122,7 +135,7 @@ AITicketSystem/
 ## Ticket Workflow
 
 ```
-Incoming email (Postmark webhook)
+Incoming email (Brevo inbound webhook)
         │
         ▼
   Ticket created → assigned to AI agent (status: NEW)
@@ -134,17 +147,17 @@ Incoming email (Postmark webhook)
   Auto-classify category (GPT-5 Nano) → status: PROCESSING
         │
         ▼
-  KB semantic search + draft response attempt
+  KB lookup + draft response attempt (GPT-5 Nano + knowledge-base.md)
         │
-        ├─── Match found → reply sent, status: RESOLVED (AI agent stays assigned)
+        ├─── Resolved → reply sent via Brevo, status: RESOLVED (AI agent stays assigned)
         │
         └─── No match → status: OPEN, unassigned (enters human agent queue)
                 │
                 ▼
-          Agent reviews → edits if needed → approves
+          Agent reviews → edits or polishes reply → approves
                 │
                 ▼
-          Email sent to customer (Postmark)
+          Email sent to customer (Brevo transactional HTTP API)
                 │
                 ▼
           Ticket marked Resolved / Closed
@@ -154,7 +167,7 @@ Incoming email (Postmark webhook)
 
 | Role | Permissions |
 |---|---|
-| Admin | Full access; creates and manages agent accounts; manages knowledge base |
+| Admin | Full access; creates and manages agent accounts; edits `knowledge-base.md` directly |
 | Agent | Views ticket queue; reviews and sends AI-drafted responses |
 
 ## Ticket Statuses
@@ -169,7 +182,24 @@ Incoming email (Postmark webhook)
 
 All endpoints are prefixed `/api/`. The Vite dev server proxies `/api/*` to the backend, so no CORS configuration is required in development.
 
-Health check: `GET /api/health`
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/health` | — | Health check |
+| `GET` | `/api/tickets` | Agent | List tickets (filterable, sortable, paginated) |
+| `POST` | `/api/tickets` | Agent | Create a ticket manually |
+| `GET` | `/api/tickets/stats` | Agent | Aggregate metrics (totals, AI rate, avg resolution time) |
+| `GET` | `/api/tickets/daily` | Agent | Daily ticket counts for the last 30 days |
+| `GET` | `/api/tickets/:id` | Agent | Get a single ticket with replies |
+| `PATCH` | `/api/tickets/:id` | Agent | Update status, category, or assignee |
+| `POST` | `/api/tickets/:id/replies` | Agent | Add a reply and send outbound email |
+| `POST` | `/api/tickets/:id/summarise` | Agent | Stream an AI summary for the ticket |
+| `POST` | `/api/tickets/polish-reply` | Agent | Stream a polished version of a draft reply |
+| `GET` | `/api/agents` | Agent | List assignable agents (excludes AI agent) |
+| `GET` | `/api/users` | Admin | List all users |
+| `POST` | `/api/users` | Admin | Create a user |
+| `PATCH` | `/api/users/:id` | Admin | Update name, role, or active status |
+| `DELETE` | `/api/users/:id` | Admin | Soft-delete a user (sets `isActive: false`) |
+| `POST` | `/api/webhooks/inbound-email` | Secret | Brevo inbound email webhook |
 
 ## License
 

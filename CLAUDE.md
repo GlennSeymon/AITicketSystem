@@ -8,15 +8,16 @@ See `projectScope.md` for requirements, `tech-stack.md` for stack decisions, and
 
 ## Stack
 
-- **Frontend:** React 18 + TypeScript + Vite + MUI (port 3000)
+- **Frontend:** React 19 + TypeScript + Vite + MUI v9 + React Router 7 (port 3000)
 - **Backend:** Express + TypeScript + Bun (port 3001)
-- **Database:** PostgreSQL 16 + pgvector (Docker)
+- **Database:** PostgreSQL 16 + pgvector extension (Docker; vector type used in schema but KB uses a flat file)
 - **ORM:** Prisma 7
 - **Auth:** Better Auth (email/password, database sessions)
-- **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-5-nano` for all AI tasks (classification, auto-resolution, summarise, polish)
+- **AI:** OpenAI API via Vercel AI SDK (`ai` + `@ai-sdk/openai`); `gpt-5-nano` for all AI tasks (classification, auto-resolution, summarise, polish); `@ai-sdk/react` `useCompletion` hook for streaming polish and summarise on the frontend
 - **Queue:** pg-boss (PostgreSQL-backed job queue); `backend/src/queue.ts` exports `boss`, `Queues`, and `startQueue()`
-- **Embeddings:** @xenova/transformers — local, no API key required
+- **Knowledge base:** Flat markdown file at `backend/knowledge-base.md`; read at startup by `autoResolve.ts` and injected into the AI prompt. The `KBArticle` Prisma model and pgvector embedding field exist in the schema but are not used.
 - **Email:** Inbound via Brevo inbound parsing → `POST /api/webhooks/inbound-email`; auth via `?secret=` query param (Brevo does not support custom request headers); outbound via Brevo transactional email HTTP API (`POST https://api.brevo.com/v3/smtp/email`) dispatched as a pg-boss background job (`Queues.sendEmail`) — SMTP is not used (Railway blocks outbound port 587)
+- **HTML sanitization:** `DOMPurify` sanitizes inbound HTML email bodies before rendering via `dangerouslySetInnerHTML` in `ReplyThread.tsx`
 - **Error tracking:** Sentry (`@sentry/node` backend, `@sentry/react` frontend); events proxied through `/api/sentry-tunnel` to bypass ad blockers
 
 ## Project Structure
